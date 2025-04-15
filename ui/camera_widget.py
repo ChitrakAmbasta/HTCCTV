@@ -1,8 +1,12 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox, QSizePolicy
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QFont,  QImage, QPixmap
 from .dialogs import DataPointsDialog, ConfigureCameraDialog
 from config.config_handler import load_camera_config, update_camera_config
+import cv2
+from streaming.rtsp_handler import RTSPStreamThread
+import numpy as np
+from centralisedlogging import logger
 
 
 class CameraWidget(QWidget):
@@ -78,6 +82,9 @@ class CameraWidget(QWidget):
 
         self.setLayout(layout)
 
+        self.stream_thread = None
+        self.start_camera_stream()
+        
     def open_data_dialog(self):
         dialog = DataPointsDialog(selected_points=self.selected_data_points, parent=self)
         if dialog.exec_():
@@ -104,4 +111,29 @@ class CameraWidget(QWidget):
 
             QMessageBox.information(self, "Camera Saved", f"{self.display_name} RTSP link saved:\n{self.rtsp_link}")
 
+            if self.stream_thread:
+                self.stream_thread.stop()
+            self.start_camera_stream()
+
+    def start_camera_stream(self):
+        if not self.rtsp_link:
+            logger.warning(f"No RTSP link configured for {self.name}")
+            return
+
+        self.stream_thread = RTSPStreamThread(self.rtsp_link)
+        self.stream_thread.frame_received.connect(self.update_video_frame)
+        self.stream_thread.start()
+
+    def update_video_frame(self, frame):
+        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_image.shape
+        bytes_per_line = ch * w
+        qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.size(), Qt.KeepAspectRatio)
+        self.video_label.setPixmap(pixmap)
+
+    def closeEvent(self, event):
+        if self.stream_thread:
+            self.stream_thread.stop()
+        event.accept()
 
