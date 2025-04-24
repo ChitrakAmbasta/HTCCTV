@@ -43,23 +43,33 @@ class CameraWidget(QWidget):
             "CAMERA HEALTH", "AIR PRESS", "AIR TEMP",
             "AIR FILT CLOG", "CAM TEMP", "CAMERA REM"
         ]
+
+        status_values_raw = [True, False, True, True, True]
+
+        camera_health = all(status_values_raw)
+        status_values = [camera_health] + status_values_raw
+
         status_layout = QHBoxLayout()
         status_layout.setSpacing(6)
-        for text in status_labels:
+
+        for text, is_ok in zip(status_labels, status_values):
             label = QLabel(text)
-            label.setStyleSheet("""
-                QLabel {
-                    background-color: #e0e0e0;
+            color = "#8BC34A" if is_ok else "#f44336"  # green if True, red if False
+
+            label.setStyleSheet(f"""
+                QLabel {{
+                    background-color: {color};
                     font-weight: bold;
                     font-size: 10pt;
                     border: 1px solid #ccc;
                     border-radius: 3px;
                     padding: 3px 8px;
-                }
+                }}
             """)
             label.setAlignment(Qt.AlignCenter)
             label.setFixedHeight(28)
             status_layout.addWidget(label)
+
         layout.addLayout(status_layout)
 
         self.configure_btn = QPushButton("CONFIGURE")
@@ -83,6 +93,7 @@ class CameraWidget(QWidget):
         self.setLayout(layout)
 
         self.stream_thread = None
+        self.show_placeholder_logo()
         self.start_camera_stream()
         
     def open_data_dialog(self):
@@ -136,4 +147,18 @@ class CameraWidget(QWidget):
         if self.stream_thread:
             self.stream_thread.stop()
         event.accept()
+
+
+    def show_placeholder_logo(self):
+        try:
+            pixmap = QPixmap("assets/logo.png")
+            if pixmap.isNull():
+                logger.warning("Logo image not found or invalid format.")
+                self.video_label.setText("No Camera Configured")
+            else:
+                scaled = pixmap.scaled(self.video_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.video_label.setPixmap(scaled)
+        except Exception as e:
+            logger.error(f"Failed to load placeholder image: {e}")
+
 

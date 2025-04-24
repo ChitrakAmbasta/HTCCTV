@@ -42,3 +42,198 @@
 2025-04-15 16:24:34,993 - CentralizedLogger - WARNING - [rtsp_handler.py] - Failed to read frame from RTSP.
 2025-04-15 16:24:35,007 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream stopped.
 2025-04-15 16:24:35,029 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream stopped.
+2025-04-16 11:30:40,006 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 11:30:40,115 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 11:30:40,120 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 11:30:40,123 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 11:30:40,126 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 11:31:01,801 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream started: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp
+2025-04-16 11:31:16,452 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream started: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp
+2025-04-16 11:48:29,624 - CentralizedLogger - WARNING - [rtsp_handler.py] - Failed to read frame from RTSP.
+2025-04-16 11:48:29,647 - CentralizedLogger - WARNING - [rtsp_handler.py] - Failed to read frame from RTSP.
+2025-04-16 11:48:29,669 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream stopped.
+2025-04-16 11:48:29,684 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream stopped.
+2025-04-16 11:54:35,909 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 11:54:36,235 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 11:54:36,238 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 11:54:36,239 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 11:54:36,241 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 11:55:19,527 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream started: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp
+2025-04-16 11:55:48,032 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream started: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp
+2025-04-16 12:11:43,959 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 12:11:44,331 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:11:44,333 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 12:11:44,336 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 12:11:44,340 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 12:12:13,501 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:26:52,750 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 12:26:53,358 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:26:53,364 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 12:26:53,375 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 12:26:53,391 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 12:33:46,652 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 12:33:46,886 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:33:46,889 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 12:33:46,891 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 12:33:46,892 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 12:39:27,845 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 12:39:27,945 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:39:27,948 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 12:39:27,950 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 12:39:27,951 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 12:40:06,686 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 12:40:06,781 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:40:06,783 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 12:40:06,785 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 12:40:06,793 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 12:48:51,729 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 12:48:51,838 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:48:53,162 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream started: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp
+2025-04-16 12:48:54,360 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream started: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp
+2025-04-16 12:48:55,605 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream started: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp
+2025-04-16 12:49:44,709 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 12:49:44,816 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:49:44,819 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 12:49:44,821 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 12:49:44,824 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 12:58:52,079 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 12:58:52,175 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:58:52,178 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 12:58:52,179 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 12:58:52,182 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 12:59:19,560 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 12:59:19,630 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 12:59:19,631 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 12:59:19,633 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 12:59:19,635 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 13:00:00,501 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 13:00:00,599 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 13:00:00,601 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 13:00:00,602 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 13:00:00,604 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 14:06:04,294 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 14:06:04,360 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 14:06:04,362 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 14:06:04,364 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 14:06:04,367 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-16 14:10:36,867 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-16 14:10:36,942 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-16 14:10:36,944 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-16 14:10:36,946 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-16 14:10:36,948 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-17 09:17:47,999 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-17 09:17:48,171 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-17 09:17:48,173 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-17 09:17:48,174 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-17 09:17:48,175 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-17 09:20:29,824 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-17 09:20:29,884 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-17 09:20:29,886 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-17 09:20:29,887 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-17 09:20:29,889 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-17 09:21:34,992 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream started: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp
+2025-04-17 09:22:01,807 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream stopped.
+2025-04-17 09:22:03,046 - CentralizedLogger - INFO - [rtsp_handler.py] - RTSP stream started: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp
+2025-04-18 10:08:18,646 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-18 10:08:18,950 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-18 10:08:18,952 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-18 10:08:18,955 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-18 10:08:18,959 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-21 12:04:48,063 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-21 12:04:48,374 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-21 12:04:48,377 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-21 12:04:48,378 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-21 12:04:48,380 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-21 12:10:45,071 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-21 12:10:45,290 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-21 12:10:45,293 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-21 12:10:45,296 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-21 12:10:45,300 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-21 12:11:44,656 - CentralizedLogger - ERROR - [rtsp_handler.py] - Failed to open RTSP stream: kkj
+2025-04-21 14:54:14,092 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-21 14:54:14,183 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-21 14:54:14,187 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-21 14:54:14,189 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-21 14:54:14,191 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-22 12:49:27,589 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-22 12:49:27,783 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-22 12:49:27,787 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-22 12:49:27,789 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-22 12:49:27,792 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-22 12:54:22,226 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-22 12:54:22,286 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-22 12:54:22,288 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-22 12:54:22,290 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-22 12:54:22,292 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-23 12:10:30,943 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-23 12:10:31,430 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-23 12:10:31,433 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-23 12:10:31,435 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-23 12:10:31,438 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-23 12:31:21,981 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-23 12:31:22,456 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-23 12:31:22,459 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-23 12:31:22,461 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-23 12:31:22,464 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-23 12:32:30,101 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-23 12:32:30,183 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-23 12:32:30,187 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-23 12:32:30,190 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-23 12:32:30,194 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-23 12:40:18,022 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-23 14:24:40,107 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-23 14:24:40,260 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-23 14:24:40,262 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-23 14:24:40,264 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-23 14:24:40,267 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-23 14:27:26,910 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-23 14:27:26,989 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-23 14:27:26,993 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-23 14:27:26,995 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-23 14:27:26,998 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-23 16:13:02,544 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-23 16:13:02,730 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-23 16:13:02,734 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-23 16:13:02,736 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-23 16:13:02,739 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-23 16:37:15,167 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 10:13:11,715 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 10:13:12,047 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 10:16:23,118 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 10:16:23,316 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-24 10:16:23,320 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 10:16:23,323 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-24 10:16:23,326 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-24 16:37:54,744 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 16:37:59,983 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 16:38:00,403 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-24 16:38:00,412 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 16:38:00,419 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-24 16:38:00,428 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-24 16:38:28,216 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 16:38:28,424 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-24 16:38:28,432 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 16:38:28,442 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-24 16:38:28,452 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-24 16:41:25,153 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 16:41:25,341 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-24 16:41:25,348 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 16:41:25,356 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-24 16:41:25,364 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-24 16:42:43,194 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 16:45:39,040 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 16:45:39,245 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-24 16:45:39,252 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 16:45:39,262 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-24 16:45:39,271 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
+2025-04-24 17:11:12,294 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 17:11:12,527 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 17:11:15,614 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 17:11:15,615 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 17:11:22,807 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 17:11:22,808 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 17:12:40,427 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-24 17:12:40,620 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 1
+2025-04-24 17:12:40,627 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 2
+2025-04-24 17:12:40,636 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 3
+2025-04-24 17:12:40,648 - CentralizedLogger - WARNING - [camera_widget.py] - No RTSP link configured for Camera 4
