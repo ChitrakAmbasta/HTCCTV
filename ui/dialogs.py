@@ -51,7 +51,7 @@ class DataPointsDialog(QDialog):
         return result
 
 class ConfigureCameraDialog(QDialog):
-    def __init__(self, current_rtsp='', parent=None):
+    def __init__(self, current_rtsp='', current_name='', parent=None):
         super().__init__(parent)
         self.setWindowTitle("Configure Camera")
         self.rtsp_link = current_rtsp
@@ -62,6 +62,12 @@ class ConfigureCameraDialog(QDialog):
         self.rtsp_input.setPlaceholderText("Enter RTSP link")
         layout.addWidget(self.rtsp_input)
 
+        self.name_input = QLineEdit()
+        self.name_input.setText(current_name)
+        self.name_input.setPlaceholderText("Enter camera name")
+        layout.addWidget(self.name_input)
+
+
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -70,3 +76,7 @@ class ConfigureCameraDialog(QDialog):
 
     def get_rtsp_link(self):
         return self.rtsp_input.text()
+    
+    def get_camera_name(self):
+        return self.name_input.text().strip()
+
