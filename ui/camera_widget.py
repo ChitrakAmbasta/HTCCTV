@@ -1,25 +1,43 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox, QSizePolicy
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QFont,  QImage, QPixmap
 from .dialogs import DataPointsDialog, ConfigureCameraDialog
+from config.config_handler import load_camera_config, update_camera_config
+import cv2
+from streaming.rtsp_handler import RTSPStreamThread
+import numpy as np
+from centralisedlogging import logger
+
 
 class CameraWidget(QWidget):
     def __init__(self, name, parent=None):
         super().__init__(parent)
         self.name = name
+        config = load_camera_config().get(self.name, {})
+        self.rtsp_link = config.get("rtsp", "")
+        self.selected_data_points = config.get("data_points", [])
+        self.display_name = config.get("name", self.name)
+
         self.main_window = parent
         self.rtsp_link = ""
         self.selected_data_points = []
 
         layout = QVBoxLayout()
 
+        self.name_label = QLabel(self.display_name)
+        self.name_label.setAlignment(Qt.AlignLeft)
+        self.name_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #333;")
+        layout.addWidget(self.name_label)
+
+
         self.video_label = QLabel(f"{name} View")
         self.video_label.setStyleSheet("background-color: black; color: white;")
         self.video_label.setAlignment(Qt.AlignCenter)
         self.video_label.setFont(QFont("Arial", 24, QFont.Bold))
-        self.video_label.setMinimumSize(320, 240)
+        self.video_label.setMinimumSize(620, 350)
+        self.video_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.video_label.mouseDoubleClickEvent = self.toggle_fullscreen
-        layout.addWidget(self.video_label)
+        layout.addWidget(self.video_label, stretch=1)
 
         status_labels = [
             "CAMERA HEALTH", "AIR PRESS", "AIR TEMP",
@@ -64,10 +82,14 @@ class CameraWidget(QWidget):
 
         self.setLayout(layout)
 
+        self.stream_thread = None
+        self.start_camera_stream()
+        
     def open_data_dialog(self):
         dialog = DataPointsDialog(selected_points=self.selected_data_points, parent=self)
         if dialog.exec_():
             self.selected_data_points = dialog.get_selected_points()
+            update_camera_config(self.name, data_points=self.selected_data_points)
             selected_names = [dp["name"] for dp in self.selected_data_points if dp["checked"]]
             QMessageBox.information(self, "Data Points Saved", f"Saved data points for {self.name}:\n" + ", ".join(selected_names))
             if self.main_window.stack_layout.currentWidget() == self.main_window.fullscreen_frame:
@@ -80,6 +102,38 @@ class CameraWidget(QWidget):
         dialog = ConfigureCameraDialog(current_rtsp=self.rtsp_link, parent=self)
         if dialog.exec_():
             self.rtsp_link = dialog.get_rtsp_link()
-            QMessageBox.information(self, "RTSP Saved", f"{self.name} RTSP link saved:\n{self.rtsp_link}")
+            new_name = dialog.get_camera_name()
 
+            self.display_name = new_name or self.name
+            self.name_label.setText(self.display_name)
+
+            update_camera_config(self.name, rtsp=self.rtsp_link, data_points=self.selected_data_points, name=self.display_name)
+
+            QMessageBox.information(self, "Camera Saved", f"{self.display_name} RTSP link saved:\n{self.rtsp_link}")
+
+            if self.stream_thread:
+                self.stream_thread.stop()
+            self.start_camera_stream()
+
+    def start_camera_stream(self):
+        if not self.rtsp_link:
+            logger.warning(f"No RTSP link configured for {self.name}")
+            return
+
+        self.stream_thread = RTSPStreamThread(self.rtsp_link)
+        self.stream_thread.frame_received.connect(self.update_video_frame)
+        self.stream_thread.start()
+
+    def update_video_frame(self, frame):
+        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_image.shape
+        bytes_per_line = ch * w
+        qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.size(), Qt.KeepAspectRatio)
+        self.video_label.setPixmap(pixmap)
+
+    def closeEvent(self, event):
+        if self.stream_thread:
+            self.stream_thread.stop()
+        event.accept()
 

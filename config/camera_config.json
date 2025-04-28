@@ -1,0 +1,103 @@
+{
+    "Camera 1": {
+        "rtsp": "rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp",
+        "data_points": [
+            {
+                "index": 1,
+                "checked": true,
+                "name": "Data Point 1"
+            },
+            {
+                "index": 2,
+                "checked": true,
+                "name": "Data Point 2"
+            },
+            {
+                "index": 3,
+                "checked": true,
+                "name": "Data Point 3"
+            },
+            {
+                "index": 4,
+                "checked": true,
+                "name": "Data Point 4"
+            },
+            {
+                "index": 5,
+                "checked": true,
+                "name": "Data Point 5"
+            },
+            {
+                "index": 6,
+                "checked": true,
+                "name": "Data Point 6"
+            },
+            {
+                "index": 7,
+                "checked": true,
+                "name": "Data Point 7"
+            },
+            {
+                "index": 8,
+                "checked": false,
+                "name": "Data Point 8"
+            },
+            {
+                "index": 9,
+                "checked": false,
+                "name": "Data Point 9"
+            },
+            {
+                "index": 10,
+                "checked": false,
+                "name": "Data Point 10"
+            },
+            {
+                "index": 11,
+                "checked": false,
+                "name": "Data Point 11"
+            },
+            {
+                "index": 12,
+                "checked": false,
+                "name": "Data Point 12"
+            },
+            {
+                "index": 13,
+                "checked": false,
+                "name": "Data Point 13"
+            },
+            {
+                "index": 14,
+                "checked": false,
+                "name": "Data Point 14"
+            },
+            {
+                "index": 15,
+                "checked": false,
+                "name": "Data Point 15"
+            },
+            {
+                "index": 16,
+                "checked": false,
+                "name": "Data Point 16"
+            }
+        ],
+        "name": "Camera 1"
+    },
+    "Camera 2": {
+        "rtsp": "rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp",
+        "data_points": [],
+        "name": "Camera 2"
+    },
+    "Camera 3": {
+        "rtsp": "rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp",
+        "data_points": [],
+        "name": "Camera 3"
+    },
+    "Camera 4": {
+        "rtsp": "rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101?transport=udp",
+        "data_points": [],
+        "name": "Camera 4"
+    }
+}
