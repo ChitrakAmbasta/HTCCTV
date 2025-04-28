@@ -1,13 +1,15 @@
+# ui/camera_widget.py
+
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox, QSizePolicy
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont,  QImage, QPixmap
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QImage, QPixmap
 from .dialogs import DataPointsDialog, ConfigureCameraDialog
 from config.config_handler import load_camera_config, update_camera_config
-import cv2
+from config.gpio_controller import GPIOController
 from streaming.rtsp_handler import RTSPStreamThread
-import numpy as np
 from centralisedlogging import logger
-
+import cv2
+import numpy as np
 
 class CameraWidget(QWidget):
     def __init__(self, name, parent=None):
@@ -22,13 +24,17 @@ class CameraWidget(QWidget):
         self.rtsp_link = ""
         self.selected_data_points = []
 
+        # Setup GPIO Controller only for Camera 1
+        self.gpio_controller = None
+        if self.name == "Camera 1":
+            self.gpio_controller = GPIOController(pin=27)  # GPIO27 for Camera 1
+
         layout = QVBoxLayout()
 
         self.name_label = QLabel(self.display_name)
         self.name_label.setAlignment(Qt.AlignLeft)
         self.name_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #333;")
         layout.addWidget(self.name_label)
-
 
         self.video_label = QLabel(f"{name} View")
         self.video_label.setStyleSheet("background-color: black; color: white;")
@@ -45,7 +51,6 @@ class CameraWidget(QWidget):
         ]
 
         status_values_raw = [True, False, True, True, True]
-
         camera_health = all(status_values_raw)
         status_values = [camera_health] + status_values_raw
 
@@ -54,8 +59,7 @@ class CameraWidget(QWidget):
 
         for text, is_ok in zip(status_labels, status_values):
             label = QLabel(text)
-            color = "#8BC34A" if is_ok else "#f44336"  # green if True, red if False
-
+            color = "#8BC34A" if is_ok else "#f44336"
             label.setStyleSheet(f"""
                 QLabel {{
                     background-color: {color};
@@ -78,10 +82,24 @@ class CameraWidget(QWidget):
         self.view_data_btn = QPushButton("VIEW DATA POINTS")
 
         for btn in [self.configure_btn, self.take_in_btn, self.take_out_btn, self.view_data_btn]:
-            btn.setStyleSheet("QPushButton { background-color: lightgrey; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; } QPushButton:hover { background-color: #d3d3d3; border-color: #999; }")
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: lightgrey;
+                    font-weight: bold;
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                    padding: 6px 12px;
+                }
+                QPushButton:hover {
+                    background-color: #d3d3d3;
+                    border-color: #999;
+                }
+            """)
 
         self.configure_btn.clicked.connect(self.configure_camera)
         self.view_data_btn.clicked.connect(self.open_data_dialog)
+        self.take_in_btn.clicked.connect(self.handle_camera_insert)
+        self.take_out_btn.clicked.connect(self.handle_camera_retract)
 
         ctrl_layout = QHBoxLayout()
         ctrl_layout.addWidget(self.configure_btn)
@@ -95,7 +113,19 @@ class CameraWidget(QWidget):
         self.stream_thread = None
         self.show_placeholder_logo()
         self.start_camera_stream()
-        
+
+    def handle_camera_insert(self):
+        if self.gpio_controller:
+            self.gpio_controller.insert_camera()
+        else:
+            logger.warning(f"Insert requested but no GPIO controller assigned for {self.name}")
+
+    def handle_camera_retract(self):
+        if self.gpio_controller:
+            self.gpio_controller.retract_camera()
+        else:
+            logger.warning(f"Retract requested but no GPIO controller assigned for {self.name}")
+
     def open_data_dialog(self):
         dialog = DataPointsDialog(selected_points=self.selected_data_points, parent=self)
         if dialog.exec_():
@@ -146,8 +176,9 @@ class CameraWidget(QWidget):
     def closeEvent(self, event):
         if self.stream_thread:
             self.stream_thread.stop()
+        if self.gpio_controller:
+            self.gpio_controller.cleanup()
         event.accept()
-
 
     def show_placeholder_logo(self):
         try:
@@ -160,5 +191,3 @@ class CameraWidget(QWidget):
                 self.video_label.setPixmap(scaled)
         except Exception as e:
             logger.error(f"Failed to load placeholder image: {e}")
-
-
