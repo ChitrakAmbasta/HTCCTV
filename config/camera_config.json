@@ -1,0 +1,22 @@
+{
+    "Camera 1": {
+        "rtsp": "rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/102",
+        "data_points": [],
+        "name": "Camera 1"
+    },
+    "Camera 2": {
+        "rtsp": "rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/101",
+        "data_points": [],
+        "name": "Camera 2"
+    },
+    "Camera 3": {
+        "rtsp": "",
+        "data_points": [],
+        "name": "Camera 3"
+    },
+    "Camera 4": {
+        "rtsp": "",
+        "data_points": [],
+        "name": "Camera 4"
+    }
+}
