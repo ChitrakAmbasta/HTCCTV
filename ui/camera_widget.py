@@ -27,7 +27,14 @@ class CameraWidget(QWidget):
         # Setup GPIO Controller only for Camera 1
         self.gpio_controller = None
         if self.name == "Camera 1":
-            self.gpio_controller = GPIOController(pin=27)  # GPIO27 for Camera 1
+            self.gpio_controller = GPIOController(pin=27)
+        elif self.name == "Camera 2":
+            self.gpio_controller = GPIOController(pin=22)
+        elif self.name == "Camera 3":
+            self.gpio_controller = GPIOController(pin=5)
+        elif self.name == "Camera 4":
+            self.gpio_controller = GPIOController(pin=23)
+
 
         layout = QVBoxLayout()
 
