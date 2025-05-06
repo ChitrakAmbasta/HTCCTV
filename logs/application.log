@@ -1,5 +1,61 @@
-2025-04-03 16:26:45,664 - CentralizedLogger - INFO - Application started
-2025-04-03 16:30:38,380 - CentralizedLogger - INFO - [main.py] - Application started
-2025-04-03 17:53:37,088 - CentralizedLogger - INFO - [main.py] - Application started
-2025-04-04 16:59:53,359 - CentralizedLogger - INFO - [main.py] - Application started
-2025-04-09 12:30:20,791 - CentralizedLogger - INFO - [main.py] - Application started
+2025-04-29 15:04:18,137 - CentralizedLogger - WARNING - [rtsp_handler.py:60] - Frame read failed. Attempting to reconnect...
+2025-04-29 15:04:18,138 - CentralizedLogger - WARNING - [rtsp_handler.py:60] - Frame read failed. Attempting to reconnect...
+2025-04-29 15:04:18,177 - CentralizedLogger - INFO - [rtsp_handler.py:66] - RTSP stream lost. Attempting to reconnect...
+2025-04-29 15:04:18,178 - CentralizedLogger - INFO - [rtsp_handler.py:66] - RTSP stream lost. Attempting to reconnect...
+2025-04-29 15:06:26,650 - CentralizedLogger - ERROR - [rtsp_handler.py:38] - Failed to open RTSP stream: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/102
+2025-04-29 15:06:26,652 - CentralizedLogger - ERROR - [rtsp_handler.py:44] - RTSP reconnect timeout after 128.5 seconds.
+2025-04-29 15:06:56,623 - CentralizedLogger - ERROR - [rtsp_handler.py:38] - Failed to open RTSP stream: rtsp://admin:a1234567@192.168.1.64/Streaming/Channels/102?transport=udp
+2025-04-29 15:06:56,624 - CentralizedLogger - ERROR - [rtsp_handler.py:44] - RTSP reconnect timeout after 158.4 seconds.
+2025-04-30 11:52:43,573 - CentralizedLogger - INFO - [main.py:10] - Starting Application...
+2025-04-30 11:52:43,757 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 27 setup as OUTPUT
+2025-04-30 11:52:43,806 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 22 setup as OUTPUT
+2025-04-30 11:52:43,809 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 5 setup as OUTPUT
+2025-04-30 11:52:43,810 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 3
+2025-04-30 11:52:43,811 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 23 setup as OUTPUT
+2025-04-30 11:52:43,815 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 4
+2025-04-30 11:52:43,815 - CentralizedLogger - INFO - [application_manager.py:23] - Starting Application...
+2025-04-30 11:53:17,943 - CentralizedLogger - INFO - [main.py:10] - Starting Application...
+2025-04-30 11:53:18,134 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 11:53:18,135 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 11:53:18,135 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 27 setup as OUTPUT
+2025-04-30 11:53:18,156 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 1
+2025-04-30 11:53:18,157 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 11:53:18,157 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 22 setup as OUTPUT
+2025-04-30 11:53:18,159 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 2
+2025-04-30 11:53:18,159 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 11:53:18,160 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 5 setup as OUTPUT
+2025-04-30 11:53:18,163 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 3
+2025-04-30 11:53:18,165 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 11:53:18,165 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 23 setup as OUTPUT
+2025-04-30 11:53:18,167 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 4
+2025-04-30 11:53:18,168 - CentralizedLogger - INFO - [application_manager.py:23] - Starting Application...
+2025-04-30 12:59:49,562 - CentralizedLogger - INFO - [main.py:10] - Starting Application...
+2025-04-30 12:59:49,906 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 12:59:49,908 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 12:59:49,910 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 27 setup as OUTPUT
+2025-04-30 12:59:49,967 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 1
+2025-04-30 12:59:49,968 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 12:59:49,968 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 22 setup as OUTPUT
+2025-04-30 12:59:49,970 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 2
+2025-04-30 12:59:49,971 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 12:59:49,971 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 5 setup as OUTPUT
+2025-04-30 12:59:49,973 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 3
+2025-04-30 12:59:49,974 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-04-30 12:59:49,974 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 23 setup as OUTPUT
+2025-04-30 12:59:49,980 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 4
+2025-04-30 12:59:49,981 - CentralizedLogger - INFO - [application_manager.py:23] - Starting Application...
+2025-05-05 16:24:31,802 - CentralizedLogger - INFO - [main.py:10] - Starting Application...
+2025-05-05 16:24:32,248 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-05-05 16:24:32,250 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-05-05 16:24:32,251 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 27 setup as OUTPUT
+2025-05-05 16:24:32,341 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 1
+2025-05-05 16:24:32,342 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-05-05 16:24:32,342 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 22 setup as OUTPUT
+2025-05-05 16:24:32,344 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 2
+2025-05-05 16:24:32,345 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-05-05 16:24:32,345 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 5 setup as OUTPUT
+2025-05-05 16:24:32,347 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 3
+2025-05-05 16:24:32,347 - CentralizedLogger - ERROR - [config_handler.py:37] - Failed to load camera config: Expecting value: line 1 column 1 (char 0)
+2025-05-05 16:24:32,347 - CentralizedLogger - INFO - [gpio_controller.py:22] - (Mock) GPIO 23 setup as OUTPUT
+2025-05-05 16:24:32,352 - CentralizedLogger - WARNING - [camera_widget.py:197] - No RTSP link configured for Camera 4
+2025-05-05 16:24:32,353 - CentralizedLogger - INFO - [application_manager.py:23] - Starting Application...
