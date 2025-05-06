@@ -1,51 +1,68 @@
+# config/config_handler.py
+
 import json
 from pathlib import Path
-import logging
+from utils.centralisedlogging import setup_logger
 
-logger = logging.getLogger("ConfigHandler")
-logger.setLevel(logging.DEBUG)
-if not logger.handlers:
-    logger.addHandler(logging.StreamHandler())
+logger = setup_logger()
 
-CONFIG_DIR = Path.cwd() / "config"
-CONFIG_FILE = CONFIG_DIR / "camera_config.json"
+class ConfigManager:
+    """
+    Manages loading, saving, and updating camera configuration stored in JSON.
+    """
 
-def ensure_config_file():
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    if not CONFIG_FILE.exists():
-        with open(CONFIG_FILE, "w") as f:
-            json.dump({}, f)
+    CONFIG_DIR = Path.cwd() / "config"
+    CONFIG_FILE = CONFIG_DIR / "camera_config.json"
 
-def load_camera_config():
-    ensure_config_file()
-    try:
-        with open(CONFIG_FILE, "r") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Failed to load camera config: {e}")
-        return {}
+    def __init__(self):
+        self.ensure_config_file()
 
-def save_camera_config(config: dict):
-    ensure_config_file()
-    try:
-        with open(CONFIG_FILE, "w") as f:
-            json.dump(config, f, indent=4)
-        logger.info("Camera config saved.")
-    except Exception as e:
-        logger.error(f"Failed to save camera config: {e}")
+    def ensure_config_file(self):
+        """
+        Ensures that the configuration file exists.
+        """
+        self.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        if not self.CONFIG_FILE.exists():
+            with open(self.CONFIG_FILE, "w") as f:
+                json.dump({}, f)
 
-def update_camera_config(camera_name: str, rtsp: str = None, data_points: list = None,  name: str = None):
-    config = load_camera_config()
-    if camera_name not in config:
-        config[camera_name] = {}
+    def load_config(self) -> dict:
+        """
+        Loads and returns the entire configuration dictionary.
+        """
+        try:
+            with open(self.CONFIG_FILE, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load camera config: {e}")
+            return {}
 
-    if rtsp is not None:
-        config[camera_name]["rtsp"] = rtsp
+    def save_config(self, config: dict):
+        """
+        Saves the provided configuration dictionary to file.
+        """
+        try:
+            with open(self.CONFIG_FILE, "w") as f:
+                json.dump(config, f, indent=4)
+            logger.info("Camera config saved successfully.")
+        except Exception as e:
+            logger.error(f"Failed to save camera config: {e}")
 
-    if data_points is not None:
-        config[camera_name]["data_points"] = data_points
+    def update_camera_config(self, camera_name: str, rtsp: str = None, data_points: list = None, name: str = None):
+        """
+        Updates a specific camera's configuration.
+        """
+        config = self.load_config()
+        if camera_name not in config:
+            config[camera_name] = {}
 
-    if name is not None:
-        config[camera_name]["name"] = name
+        if rtsp is not None:
+            config[camera_name]["rtsp"] = rtsp
 
-    save_camera_config(config)
+        if data_points is not None:
+            config[camera_name]["data_points"] = data_points
+
+        if name is not None:
+            config[camera_name]["name"] = name
+
+        self.save_config(config)

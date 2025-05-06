@@ -1,12 +1,14 @@
-import sys
-from PyQt5.QtWidgets import QApplication
-from ui.main_window import MainWindow
-from centralisedlogging import logger
+# main.py
 
+from core.application_manager import ApplicationManager
+from utils.centralisedlogging import setup_logger
+
+logger = setup_logger()
 
 if __name__ == "__main__":
-    logger.info("Application started")
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    try:
+        logger.info("Starting Application...")
+        app_manager = ApplicationManager()
+        app_manager.run()
+    except Exception as e:
+        logger.exception(f"Application startup failed: {e}")

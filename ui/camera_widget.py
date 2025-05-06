@@ -1,34 +1,58 @@
 # ui/camera_widget.py
 
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QMessageBox, QSizePolicy
+from PyQt5.QtWidgets import (
+    QWidget, QLabel, QVBoxLayout, QHBoxLayout,
+    QPushButton, QMessageBox, QSizePolicy
+)
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QImage, QPixmap
+from PyQt5.QtGui import QFont, QPixmap, QImage
+
 from .dialogs import DataPointsDialog, ConfigureCameraDialog
-from config.config_handler import load_camera_config, update_camera_config
+from config.config_handler import ConfigManager
 from config.gpio_controller import GPIOController
 from streaming.rtsp_handler import RTSPStreamThread
-from centralisedlogging import logger
+from utils.centralisedlogging import setup_logger
+
 import cv2
 import numpy as np
 
+logger = setup_logger()
+
 class CameraWidget(QWidget):
+    """
+    Represents an individual camera widget, handling video display,
+    GPIO-based insert/retract actions, configuration, and RTSP stream.
+    """
+
     def __init__(self, name, parent=None):
         super().__init__(parent)
         self.name = name
-        config = load_camera_config().get(self.name, {})
-        self.rtsp_link = config.get("rtsp", "")
-        self.selected_data_points = config.get("data_points", [])
-        self.display_name = config.get("name", self.name)
-
         self.main_window = parent
-        self.rtsp_link = ""
-        self.selected_data_points = []
+        self.config_manager = ConfigManager()
 
-        # Setup GPIO Controller only for Camera 1
-        self.gpio_controller = None
-        if self.name == "Camera 1":
-            self.gpio_controller = GPIOController(pin=27)  # GPIO27 for Camera 1
+        self.config = self.config_manager.load_config().get(self.name, {})
+        self.rtsp_link = self.config.get("rtsp", "")
+        self.selected_data_points = self.config.get("data_points", [])
+        self.display_name = self.config.get("name", self.name)
 
+        self.gpio_controller = self.assign_gpio_controller()
+        self.stream_thread = None
+
+        self.setup_ui()
+        self.show_placeholder_logo()
+        self.start_camera_stream()
+
+    def assign_gpio_controller(self):
+        gpio_mapping = {
+            "Camera 1": 27,
+            "Camera 2": 22,
+            "Camera 3": 5,
+            "Camera 4": 23,
+        }
+        pin = gpio_mapping.get(self.name)
+        return GPIOController(pin=pin) if pin else None
+
+    def setup_ui(self):
         layout = QVBoxLayout()
 
         self.name_label = QLabel(self.display_name)
@@ -36,26 +60,34 @@ class CameraWidget(QWidget):
         self.name_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #333;")
         layout.addWidget(self.name_label)
 
-        self.video_label = QLabel(f"{name} View")
-        self.video_label.setStyleSheet("background-color: black; color: white;")
+        self.video_label = QLabel(f"{self.name} View")
         self.video_label.setAlignment(Qt.AlignCenter)
         self.video_label.setFont(QFont("Arial", 24, QFont.Bold))
         self.video_label.setMinimumSize(620, 350)
         self.video_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.video_label.setStyleSheet("background-color: black; color: white;")
         self.video_label.mouseDoubleClickEvent = self.toggle_fullscreen
         layout.addWidget(self.video_label, stretch=1)
 
+        status_layout = self.create_status_layout()
+        layout.addLayout(status_layout)
+
+        control_layout = self.create_control_buttons()
+        layout.addLayout(control_layout)
+
+        self.setLayout(layout)
+
+    def create_status_layout(self):
         status_labels = [
             "CAMERA HEALTH", "AIR PRESS", "AIR TEMP",
             "AIR FILT CLOG", "CAM TEMP", "CAMERA REM"
         ]
-
         status_values_raw = [True, False, True, True, True]
         camera_health = all(status_values_raw)
         status_values = [camera_health] + status_values_raw
 
-        status_layout = QHBoxLayout()
-        status_layout.setSpacing(6)
+        layout = QHBoxLayout()
+        layout.setSpacing(6)
 
         for text, is_ok in zip(status_labels, status_values):
             label = QLabel(text)
@@ -72,10 +104,11 @@ class CameraWidget(QWidget):
             """)
             label.setAlignment(Qt.AlignCenter)
             label.setFixedHeight(28)
-            status_layout.addWidget(label)
+            layout.addWidget(label)
 
-        layout.addLayout(status_layout)
+        return layout
 
+    def create_control_buttons(self):
         self.configure_btn = QPushButton("CONFIGURE")
         self.take_in_btn = QPushButton("CAMERA INSERT")
         self.take_out_btn = QPushButton("CAMERA RETRACT")
@@ -101,40 +134,13 @@ class CameraWidget(QWidget):
         self.take_in_btn.clicked.connect(self.handle_camera_insert)
         self.take_out_btn.clicked.connect(self.handle_camera_retract)
 
-        ctrl_layout = QHBoxLayout()
-        ctrl_layout.addWidget(self.configure_btn)
-        ctrl_layout.addWidget(self.take_in_btn)
-        ctrl_layout.addWidget(self.take_out_btn)
-        ctrl_layout.addWidget(self.view_data_btn)
-        layout.addLayout(ctrl_layout)
+        layout = QHBoxLayout()
+        layout.addWidget(self.configure_btn)
+        layout.addWidget(self.take_in_btn)
+        layout.addWidget(self.take_out_btn)
+        layout.addWidget(self.view_data_btn)
 
-        self.setLayout(layout)
-
-        self.stream_thread = None
-        self.show_placeholder_logo()
-        self.start_camera_stream()
-
-    def handle_camera_insert(self):
-        if self.gpio_controller:
-            self.gpio_controller.insert_camera()
-        else:
-            logger.warning(f"Insert requested but no GPIO controller assigned for {self.name}")
-
-    def handle_camera_retract(self):
-        if self.gpio_controller:
-            self.gpio_controller.retract_camera()
-        else:
-            logger.warning(f"Retract requested but no GPIO controller assigned for {self.name}")
-
-    def open_data_dialog(self):
-        dialog = DataPointsDialog(selected_points=self.selected_data_points, parent=self)
-        if dialog.exec_():
-            self.selected_data_points = dialog.get_selected_points()
-            update_camera_config(self.name, data_points=self.selected_data_points)
-            selected_names = [dp["name"] for dp in self.selected_data_points if dp["checked"]]
-            QMessageBox.information(self, "Data Points Saved", f"Saved data points for {self.name}:\n" + ", ".join(selected_names))
-            if self.main_window.stack_layout.currentWidget() == self.main_window.fullscreen_frame:
-                self.main_window.show_data_sidebar(self)
+        return layout
 
     def toggle_fullscreen(self, event):
         self.main_window.toggle_camera_fullscreen(self)
@@ -148,13 +154,43 @@ class CameraWidget(QWidget):
             self.display_name = new_name or self.name
             self.name_label.setText(self.display_name)
 
-            update_camera_config(self.name, rtsp=self.rtsp_link, data_points=self.selected_data_points, name=self.display_name)
+            self.config_manager.update_camera_config(
+                self.name,
+                rtsp=self.rtsp_link,
+                data_points=self.selected_data_points,
+                name=self.display_name
+            )
 
             QMessageBox.information(self, "Camera Saved", f"{self.display_name} RTSP link saved:\n{self.rtsp_link}")
 
             if self.stream_thread:
                 self.stream_thread.stop()
+
             self.start_camera_stream()
+
+    def open_data_dialog(self):
+        dialog = DataPointsDialog(selected_points=self.selected_data_points, parent=self)
+        if dialog.exec_():
+            self.selected_data_points = dialog.get_selected_points()
+            self.config_manager.update_camera_config(self.name, data_points=self.selected_data_points)
+
+            selected_names = [dp["name"] for dp in self.selected_data_points if dp["checked"]]
+            QMessageBox.information(self, "Data Points Saved", f"Saved data points for {self.name}:\n" + ", ".join(selected_names))
+
+            if self.main_window.stack_layout.currentWidget() == self.main_window.fullscreen_frame:
+                self.main_window.show_data_sidebar(self)
+
+    def handle_camera_insert(self):
+        if self.gpio_controller:
+            self.gpio_controller.insert_camera()
+        else:
+            logger.warning(f"No GPIO controller assigned for {self.name}")
+
+    def handle_camera_retract(self):
+        if self.gpio_controller:
+            self.gpio_controller.retract_camera()
+        else:
+            logger.warning(f"No GPIO controller assigned for {self.name}")
 
     def start_camera_stream(self):
         if not self.rtsp_link:
@@ -163,6 +199,8 @@ class CameraWidget(QWidget):
 
         self.stream_thread = RTSPStreamThread(self.rtsp_link)
         self.stream_thread.frame_received.connect(self.update_video_frame)
+        self.stream_thread.reconnecting.connect(self.show_reconnecting_message)
+        self.stream_thread.stream_failed.connect(self.show_placeholder_logo)  # <-- ✅ Connect stream failure signal
         self.stream_thread.start()
 
     def update_video_frame(self, frame):
@@ -171,7 +209,45 @@ class CameraWidget(QWidget):
         bytes_per_line = ch * w
         qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.size(), Qt.KeepAspectRatio)
+
+        
         self.video_label.setPixmap(pixmap)
+
+    def show_reconnecting_message(self):
+        self.video_label.setText("Reconnecting...")
+        self.video_label.setStyleSheet("""
+            QLabel {
+                background-color: black;
+                color: yellow;
+                font-size: 18pt;
+                font-weight: bold;
+                qproperty-alignment: AlignCenter;
+            }
+        """)
+
+    def show_placeholder_logo(self):
+        try:
+            pixmap = QPixmap("assets/logo.png")
+            if pixmap.isNull():
+                logger.warning("Logo image not found or invalid format.")
+                self.video_label.setText("Stream Failed")
+                self.video_label.setStyleSheet("""
+                    QLabel {
+                        background-color: black;
+                        color: red;
+                        font-size: 16pt;
+                        font-weight: bold;
+                        qproperty-alignment: AlignCenter;
+                    }
+                """)
+            else:
+                scaled = pixmap.scaled(480, 270, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.video_label.setPixmap(scaled)
+                self.video_label.setAlignment(Qt.AlignCenter)
+                self.video_label.setStyleSheet("background-color: black;")
+        except Exception as e:
+            logger.error(f"Failed to load placeholder image: {e}")
+
 
     def closeEvent(self, event):
         if self.stream_thread:
@@ -179,15 +255,3 @@ class CameraWidget(QWidget):
         if self.gpio_controller:
             self.gpio_controller.cleanup()
         event.accept()
-
-    def show_placeholder_logo(self):
-        try:
-            pixmap = QPixmap("assets/logo.png")
-            if pixmap.isNull():
-                logger.warning("Logo image not found or invalid format.")
-                self.video_label.setText("No Camera Configured")
-            else:
-                scaled = pixmap.scaled(self.video_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self.video_label.setPixmap(scaled)
-        except Exception as e:
-            logger.error(f"Failed to load placeholder image: {e}")
