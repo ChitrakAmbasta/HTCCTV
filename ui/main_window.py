@@ -1,31 +1,37 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QStackedLayout, QGridLayout, QFrame, QHBoxLayout, QLabel
+# ui/main_window.py
+
+from PyQt5.QtWidgets import (
+    QMainWindow, QWidget, QVBoxLayout, QStackedLayout, QGridLayout, QFrame,
+    QHBoxLayout, QLabel
+)
 from PyQt5.QtCore import Qt
-from .camera_widget import CameraWidget
+
+from core.camera_controller import CameraController
 
 class MainWindow(QMainWindow):
+    """
+    Main application window for displaying the camera monitoring grid and fullscreen view.
+    """
+
     def __init__(self):
         super().__init__()
+
         self.setWindowTitle("TOSHNIWAL INDUSTRIES PVT. LTD.")
         self.setWindowState(Qt.WindowMaximized)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
+        # Stack layout to switch between grid view and fullscreen view
         self.stack_layout = QStackedLayout()
         self.grid_widget = QWidget()
         self.grid_layout = QGridLayout()
         self.grid_layout.setSpacing(20)
         self.grid_widget.setLayout(self.grid_layout)
 
-        self.camera_widgets = []
-        positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
-        for i, pos in enumerate(positions):
-            cam = CameraWidget(f"Camera {i+1}", parent=self)
-            self.grid_layout.addWidget(cam, *pos)
-            self.camera_widgets.append(cam)
-
         self.stack_layout.addWidget(self.grid_widget)
 
+        # Fullscreen frame layout
         self.fullscreen_frame = QFrame()
         self.fullscreen_layout = QVBoxLayout()
         self.fullscreen_frame.setLayout(self.fullscreen_layout)
@@ -54,22 +60,36 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(self.stack_layout)
         self.central_widget.setLayout(main_layout)
 
+        # Initialize camera controller after layouts ready
+        self.camera_controller = CameraController(self)
+
     def toggle_camera_fullscreen(self, camera_widget):
+        """
+        Toggle between grid view and fullscreen view for the selected camera widget.
+        """
         if self.stack_layout.currentWidget() == self.grid_widget:
             self.grid_widget.hide()
+            # Clear any previous fullscreen camera
             for i in reversed(range(self.fullscreen_camera_layout.count())):
                 self.fullscreen_camera_layout.itemAt(i).widget().setParent(None)
+
             self.fullscreen_camera_layout.addWidget(camera_widget)
             self.stack_layout.setCurrentWidget(self.fullscreen_frame)
         else:
             self.fullscreen_camera_layout.removeWidget(camera_widget)
             self.stack_layout.setCurrentWidget(self.grid_widget)
-            for idx, cam in enumerate(self.camera_widgets):
+
+            # Restore cameras in grid
+            for idx, cam in enumerate(self.camera_controller.camera_widgets):
                 row, col = divmod(idx, 2)
                 self.grid_layout.addWidget(cam, row, col)
+
             self.sidebar_widget.hide()
 
     def show_data_sidebar(self, camera_widget):
+        """
+        Displays the data points associated with a selected camera widget in the sidebar.
+        """
         for i in reversed(range(self.sidebar_layout.count())):
             self.sidebar_layout.itemAt(i).widget().deleteLater()
 
@@ -101,4 +121,3 @@ class MainWindow(QMainWindow):
 
         self.sidebar_widget.setStyleSheet("background-color: #f2f2f2; border-left: 2px solid #aaa;")
         self.sidebar_widget.show()
-
