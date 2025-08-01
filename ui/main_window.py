@@ -85,7 +85,6 @@ class MainWindow(QMainWindow):
                 row, col = divmod(idx, 2)
                 self.grid_layout.addWidget(cam, row, col)
 
-            self.sidebar_widget.hide()
 
     def show_data_sidebar(self, camera_widget):
         """
