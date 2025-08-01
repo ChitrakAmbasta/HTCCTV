@@ -62,6 +62,7 @@ class MainWindow(QMainWindow):
 
         # Initialize camera controller after layouts ready
         self.camera_controller = CameraController(self)
+        self.setMinimumSize(200, 200)
 
     def toggle_camera_fullscreen(self, camera_widget):
         """
