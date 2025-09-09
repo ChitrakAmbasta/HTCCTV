@@ -1,68 +1,209 @@
 # config/config_handler.py
 
+from __future__ import annotations
+
 import json
+import tempfile
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from utils.centralisedlogging import setup_logger
 
 logger = setup_logger()
 
+
 class ConfigManager:
     """
     Manages loading, saving, and updating camera configuration stored in JSON.
+
+    Schema (per camera):
+    {
+        "<Camera N>": {
+            "name": "Display Name",
+            "rtsp": "rtsp://...",
+            "data_points": [
+                {"index": 1, "checked": true, "name": "Temp"},
+                ...
+            ],
+            "modbus_port": "COM3",
+            "modbus_slave": 1
+        },
+        ...
+    }
     """
 
     CONFIG_DIR = Path.cwd() / "config"
     CONFIG_FILE = CONFIG_DIR / "camera_config.json"
 
-    def __init__(self):
+    # ---------------------- lifecycle ----------------------
+    def __init__(self) -> None:
         self.ensure_config_file()
 
-    def ensure_config_file(self):
+    def ensure_config_file(self) -> None:
         """
-        Ensures that the configuration file exists.
-        """
-        self.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        if not self.CONFIG_FILE.exists():
-            with open(self.CONFIG_FILE, "w") as f:
-                json.dump({}, f)
-
-    def load_config(self) -> dict:
-        """
-        Loads and returns the entire configuration dictionary.
+        Ensure config directory/file exist. Create an empty JSON {} if missing.
         """
         try:
-            with open(self.CONFIG_FILE, "r") as f:
-                return json.load(f)
+            self.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            if not self.CONFIG_FILE.exists():
+                self._atomic_write(self.CONFIG_FILE, {})
+                logger.info("Created new camera_config.json")
         except Exception as e:
-            logger.error(f"Failed to load camera config: {e}")
+            logger.exception(f"Failed to ensure config file: {e}")
+
+    # ----------------------- IO helpers --------------------
+    def _atomic_write(self, path: Path, data: Dict[str, Any]) -> None:
+        """
+        Safely write JSON to disk using a temp file + replace to avoid corruption.
+        """
+        try:
+            with tempfile.NamedTemporaryFile("w", delete=False, dir=str(path.parent), suffix=".tmp") as tf:
+                json.dump(data, tf, indent=4)
+                temp_name = tf.name
+            Path(temp_name).replace(path)
+        except Exception as e:
+            logger.exception(f"Atomic write failed for {path}: {e}")
+            raise
+
+    # ------------------------ CRUD -------------------------
+    def load_config(self) -> Dict[str, Any]:
+        """
+        Load the entire config dict. Returns {} on error.
+        """
+        try:
+            with open(self.CONFIG_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if not isinstance(data, dict):
+                    logger.warning("camera_config.json root is not an object; resetting to {}")
+                    return {}
+                return data
+        except FileNotFoundError:
+            logger.warning("camera_config.json not found; returning {}")
+            return {}
+        except json.JSONDecodeError as e:
+            logger.exception(f"Invalid JSON in camera_config.json: {e}")
+            return {}
+        except Exception as e:
+            logger.exception(f"Failed to load camera config: {e}")
             return {}
 
-    def save_config(self, config: dict):
+    def save_config(self, config: Dict[str, Any]) -> None:
         """
-        Saves the provided configuration dictionary to file.
+        Save the provided config dict to disk atomically.
         """
         try:
-            with open(self.CONFIG_FILE, "w") as f:
-                json.dump(config, f, indent=4)
+            self._atomic_write(self.CONFIG_FILE, config)
             logger.info("Camera config saved successfully.")
         except Exception as e:
-            logger.error(f"Failed to save camera config: {e}")
+            logger.exception(f"Failed to save camera config: {e}")
 
-    def update_camera_config(self, camera_name: str, rtsp: str = None, data_points: list = None, name: str = None):
+    # --------------------- camera-level ops ----------------
+    def get_camera_config(self, camera_name: str) -> Dict[str, Any]:
         """
-        Updates a specific camera's configuration.
+        Return a single camera's config (or empty dict if not found).
         """
-        config = self.load_config()
-        if camera_name not in config:
-            config[camera_name] = {}
+        cfg = self.load_config()
+        return cfg.get(camera_name, {})
+
+    def list_cameras(self) -> List[str]:
+        """
+        Return a list of configured camera names (keys).
+        """
+        return list(self.load_config().keys())
+
+    def delete_camera(self, camera_name: str) -> None:
+        """
+        Remove a camera entry from the config if present.
+        """
+        cfg = self.load_config()
+        if camera_name in cfg:
+            del cfg[camera_name]
+            self.save_config(cfg)
+            logger.info(f"Deleted config for {camera_name}")
+        else:
+            logger.info(f"No config to delete for {camera_name}")
+
+    # ------------------ upsert helpers (preferred) ----------
+    def update_camera_config(
+        self,
+        camera_name: str,
+        *,
+        rtsp: Optional[str] = None,
+        data_points: Optional[List[Dict[str, Any]]] = None,
+        name: Optional[str] = None,
+        modbus_port: Optional[str] = None,
+        modbus_slave: Optional[int] = None,
+    ) -> None:
+        """
+        Upsert fields for one camera. Only provided kwargs are updated.
+        Missing camera entries are created.
+
+        Example:
+            update_camera_config(
+                "Camera 1",
+                rtsp="rtsp://...",
+                name="Boiler Cam",
+                modbus_port="COM4",
+                modbus_slave=2,
+                data_points=[{"index":1,"checked":True,"name":"Temp"}, ...]
+            )
+        """
+        cfg = self.load_config()
+        cam = cfg.get(camera_name, {})
 
         if rtsp is not None:
-            config[camera_name]["rtsp"] = rtsp
-
+            cam["rtsp"] = rtsp
         if data_points is not None:
-            config[camera_name]["data_points"] = data_points
-
+            cam["data_points"] = data_points
         if name is not None:
-            config[camera_name]["name"] = name
+            cam["name"] = name
+        if modbus_port is not None:
+            cam["modbus_port"] = modbus_port
+        if modbus_slave is not None:
+            cam["modbus_slave"] = int(modbus_slave)
 
-        self.save_config(config)
+        # ensure defaults for missing keys (harmless)
+        cam.setdefault("data_points", [])
+        cam.setdefault("name", camera_name)
+        cam.setdefault("rtsp", "")
+        cam.setdefault("modbus_port", "COM3")
+        cam.setdefault("modbus_slave", 1)
+
+        cfg[camera_name] = cam
+        self.save_config(cfg)
+
+    def update_multiple(self, updates: Dict[str, Dict[str, Any]]) -> None:
+        """
+        Batch update multiple cameras.
+        updates = {
+            "Camera 1": {"rtsp": "...", "name": "..."},
+            "Camera 2": {"modbus_port": "COM5"},
+        }
+        """
+        cfg = self.load_config()
+        for cam_name, fields in updates.items():
+            cam = cfg.get(cam_name, {})
+            for k, v in fields.items():
+                cam[k] = v
+            # maintain sane defaults
+            cam.setdefault("data_points", [])
+            cam.setdefault("name", cam_name)
+            cam.setdefault("rtsp", "")
+            cam.setdefault("modbus_port", "COM3")
+            cam.setdefault("modbus_slave", 1)
+            cfg[cam_name] = cam
+        self.save_config(cfg)
+
+    def remove_keys(self, camera_name: str, keys: List[str]) -> None:
+        """
+        Remove specific keys from a camera config.
+        """
+        cfg = self.load_config()
+        cam = cfg.get(camera_name)
+        if not cam:
+            logger.info(f"No config found for {camera_name}; nothing to remove.")
+            return
+        for k in keys:
+            cam.pop(k, None)
+        cfg[camera_name] = cam
+        self.save_config(cfg)

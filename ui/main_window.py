@@ -1,5 +1,3 @@
-# ui/main_window.py
-
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QStackedLayout, QGridLayout, QFrame,
     QHBoxLayout, QLabel
@@ -22,13 +20,16 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
+        # Track fullscreen camera + hold label refs by data-point index
+        self.current_fullscreen_camera = None
+        self._sidebar_value_labels = {}   # {index(1..16): QLabel}
+
         # Stack layout to switch between grid view and fullscreen view
         self.stack_layout = QStackedLayout()
         self.grid_widget = QWidget()
         self.grid_layout = QGridLayout()
         self.grid_layout.setSpacing(20)
         self.grid_widget.setLayout(self.grid_layout)
-
         self.stack_layout.addWidget(self.grid_widget)
 
         # Fullscreen frame layout
@@ -53,7 +54,6 @@ class MainWindow(QMainWindow):
 
         self.fullscreen_split.addWidget(self.fullscreen_camera_container)
         self.fullscreen_split.addWidget(self.sidebar_widget)
-
         self.stack_layout.addWidget(self.fullscreen_frame)
 
         main_layout = QVBoxLayout()
@@ -70,12 +70,18 @@ class MainWindow(QMainWindow):
         """
         if self.stack_layout.currentWidget() == self.grid_widget:
             self.grid_widget.hide()
+
             # Clear any previous fullscreen camera
             for i in reversed(range(self.fullscreen_camera_layout.count())):
                 self.fullscreen_camera_layout.itemAt(i).widget().setParent(None)
 
             self.fullscreen_camera_layout.addWidget(camera_widget)
             self.stack_layout.setCurrentWidget(self.fullscreen_frame)
+
+            # Mark active camera and build its sidebar
+            self.current_fullscreen_camera = camera_widget
+            self.show_data_sidebar(camera_widget)
+
         else:
             self.fullscreen_camera_layout.removeWidget(camera_widget)
             self.stack_layout.setCurrentWidget(self.grid_widget)
@@ -85,15 +91,26 @@ class MainWindow(QMainWindow):
                 row, col = divmod(idx, 2)
                 self.grid_layout.addWidget(cam, row, col)
 
+            # Leaving fullscreen – clear sidebar + state
+            self.current_fullscreen_camera = None
+            self.sidebar_widget.hide()
+            self._sidebar_value_labels.clear()
 
     def show_data_sidebar(self, camera_widget):
         """
-        Displays the data points associated with a selected camera widget in the sidebar.
+        Displays the data points for the selected camera in the sidebar,
+        building value labels we can update live via update_data_values().
         """
+        # Clear previous
         for i in reversed(range(self.sidebar_layout.count())):
             self.sidebar_layout.itemAt(i).widget().deleteLater()
+        self._sidebar_value_labels.clear()
 
-        selected = [dp["name"] for dp in camera_widget.selected_data_points if dp["checked"]]
+        # Sorted by index to keep stable order 1..16
+        selected = sorted(
+            [(dp["index"], dp["name"]) for dp in camera_widget.selected_data_points if dp.get("checked")],
+            key=lambda t: t[0]
+        )
         if not selected:
             self.sidebar_widget.hide()
             return
@@ -103,8 +120,8 @@ class MainWindow(QMainWindow):
         title.setStyleSheet("padding: 6px; font-size: 14px;")
         self.sidebar_layout.addWidget(title)
 
-        for name in selected:
-            label = QLabel(f"{name}:")
+        for idx, name in selected:
+            label = QLabel(f"{name}: --")
             label.setFixedSize(230, 30)
             label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             label.setStyleSheet("""
@@ -118,6 +135,25 @@ class MainWindow(QMainWindow):
                 }
             """)
             self.sidebar_layout.addWidget(label)
+            self._sidebar_value_labels[idx] = label
 
         self.sidebar_widget.setStyleSheet("background-color: #f2f2f2; border-left: 2px solid #aaa;")
         self.sidebar_widget.show()
+
+    def update_data_values(self, camera_widget, values_by_index: dict):
+        """
+        Update the sidebar values if the given camera is currently in fullscreen.
+        values_by_index: {index(1..16): value}
+        """
+        if self.current_fullscreen_camera is not camera_widget:
+            return
+        if not self.sidebar_widget.isVisible():
+            return
+
+        # Update only the value part; keep the left side (custom name)
+        for idx, label in self._sidebar_value_labels.items():
+            if idx not in values_by_index:
+                continue
+            name = label.text().split(":", 1)[0]
+            val = values_by_index[idx]
+            label.setText(f"{name}: {val}")
