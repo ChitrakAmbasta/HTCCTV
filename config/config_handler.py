@@ -4,12 +4,23 @@ from __future__ import annotations
 
 import json
 import tempfile
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from utils.centralisedlogging import setup_logger
 
 logger = setup_logger()
+
+
+def _default_serial_port() -> str:
+    """Choose a sensible default serial port based on OS."""
+    if sys.platform.startswith("linux"):
+        return "/dev/ttyUSB0"   # Raspberry Pi / Linux
+    elif sys.platform.startswith("darwin"):
+        return "/dev/tty.usbserial"  # macOS
+    else:
+        return "COM3"  # Windows fallback
 
 
 class ConfigManager:
@@ -25,7 +36,7 @@ class ConfigManager:
                 {"index": 1, "checked": true, "name": "Temp"},
                 ...
             ],
-            "modbus_port": "COM3",
+            "modbus_port": "/dev/ttyUSB0",
             "modbus_slave": 1
         },
         ...
@@ -137,16 +148,6 @@ class ConfigManager:
         """
         Upsert fields for one camera. Only provided kwargs are updated.
         Missing camera entries are created.
-
-        Example:
-            update_camera_config(
-                "Camera 1",
-                rtsp="rtsp://...",
-                name="Boiler Cam",
-                modbus_port="COM4",
-                modbus_slave=2,
-                data_points=[{"index":1,"checked":True,"name":"Temp"}, ...]
-            )
         """
         cfg = self.load_config()
         cam = cfg.get(camera_name, {})
@@ -162,11 +163,11 @@ class ConfigManager:
         if modbus_slave is not None:
             cam["modbus_slave"] = int(modbus_slave)
 
-        # ensure defaults for missing keys (harmless)
+        # ensure defaults for missing keys
         cam.setdefault("data_points", [])
         cam.setdefault("name", camera_name)
         cam.setdefault("rtsp", "")
-        cam.setdefault("modbus_port", "COM3")
+        cam.setdefault("modbus_port", _default_serial_port())
         cam.setdefault("modbus_slave", 1)
 
         cfg[camera_name] = cam
@@ -175,10 +176,6 @@ class ConfigManager:
     def update_multiple(self, updates: Dict[str, Dict[str, Any]]) -> None:
         """
         Batch update multiple cameras.
-        updates = {
-            "Camera 1": {"rtsp": "...", "name": "..."},
-            "Camera 2": {"modbus_port": "COM5"},
-        }
         """
         cfg = self.load_config()
         for cam_name, fields in updates.items():
@@ -189,7 +186,7 @@ class ConfigManager:
             cam.setdefault("data_points", [])
             cam.setdefault("name", cam_name)
             cam.setdefault("rtsp", "")
-            cam.setdefault("modbus_port", "COM3")
+            cam.setdefault("modbus_port", _default_serial_port())
             cam.setdefault("modbus_slave", 1)
             cfg[cam_name] = cam
         self.save_config(cfg)

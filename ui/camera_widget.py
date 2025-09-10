@@ -245,7 +245,7 @@ class CameraWidget(QWidget):
             rtsp_changed = new_rtsp != self.rtsp_link
             port_changed = (new_port and new_port != self.modbus_port)
 
-            # Apply
+            # Apply changes
             self.rtsp_link = new_rtsp
             self.display_name = new_name or self.name
             self.name_label.setText(self.display_name)
@@ -272,13 +272,15 @@ class CameraWidget(QWidget):
             )
 
             # Restart RTSP if changed
-            if rtsp_changed and self.stream_thread:
-                self.stream_thread.stop()
+            if rtsp_changed:
+                if self.stream_thread:
+                    self.stream_thread.stop()
                 self.start_camera_stream()
 
             # Restart Modbus if COM changed
-            if port_changed and self.modbus_thread:
-                self.modbus_thread.stop()
+            if port_changed:
+                if self.modbus_thread:
+                    self.modbus_thread.stop()
                 self.start_modbus_polling()
 
     def open_data_dialog(self):
@@ -327,7 +329,6 @@ class CameraWidget(QWidget):
         Start/Restart the Modbus reader thread for this camera.
         Uses robust auto-reconnect & last-good cache (see core/modbus_handler.py).
         """
-        # Stop any previous thread first
         if self.modbus_thread:
             try:
                 self.modbus_thread.stop()

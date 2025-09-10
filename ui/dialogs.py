@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLineEdit,
     QCheckBox, QDialogButtonBox, QLabel, QComboBox
 )
+import sys
 
 # Try to list serial ports; fall back gracefully if pyserial isn't present.
 try:
@@ -13,6 +14,16 @@ try:
 except Exception:
     def list_serial_ports():
         return []
+
+
+def _default_serial_port() -> str:
+    """Choose a sensible default serial port based on OS."""
+    if sys.platform.startswith("linux"):
+        return "/dev/ttyUSB0"
+    elif sys.platform.startswith("darwin"):
+        return "/dev/tty.usbserial"
+    else:
+        return "COM3"
 
 
 class DataPointsDialog(QDialog):
@@ -111,9 +122,14 @@ class ConfigureCameraDialog(QDialog):
             self.port_combo.setEnabled(False)
         else:
             self.port_combo.addItems(self._ports)
-            # Preselect current port if present
+
+            # Auto-preselect logic
             if self._current_com and self._current_com in self._ports:
+                # If config already has a port, preselect it
                 self.port_combo.setCurrentIndex(self._ports.index(self._current_com))
+            elif _default_serial_port() in self._ports:
+                # Otherwise, auto-select the default for this OS
+                self.port_combo.setCurrentIndex(self._ports.index(_default_serial_port()))
 
         layout.addWidget(self.port_combo)
 
@@ -134,5 +150,4 @@ class ConfigureCameraDialog(QDialog):
     def get_com_port(self) -> str:
         if self.port_combo.isEnabled():
             return self.port_combo.currentText().strip()
-        # Fallback: keep the previous one if no ports listed
         return self._current_com.strip()
