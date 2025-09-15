@@ -1,5 +1,7 @@
 # ui/camera_widget.py
 
+import time
+import cv2
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QHBoxLayout,
     QPushButton, QMessageBox, QSizePolicy
@@ -12,10 +14,8 @@ from config.config_handler import ConfigManager
 from config.gpio_controller import GPIOController
 from streaming.rtsp_handler import RTSPStreamThread
 from core.modbus_handler import ModbusReaderThread
+from core.recorder import CameraRecorder
 from utils.centralisedlogging import setup_logger
-
-import cv2
-
 
 logger = setup_logger()
 
@@ -28,27 +28,27 @@ class CameraWidget(QWidget):
       - Opens dialogs for configuration and data points
       - Launches a dedicated ModbusReaderThread for this camera's COM port and forwards
         values to MainWindow for the fullscreen data sidebar.
+      - Uses CameraRecorder to record video with data points overlay.
     """
 
-    # ----------------------------- lifecycle ---------------------------------
     def __init__(self, name: str, parent=None):
         super().__init__(parent)
         self.name = name
         self.main_window = parent
         self.config_manager = ConfigManager()
 
-        # ----- Load persisted camera config -----
+        # Load persisted camera config
         config_all = self.config_manager.load_config()
         self.config = config_all.get(self.name, {})
         self.rtsp_link = self.config.get("rtsp", "")
         self.selected_data_points = self.config.get("data_points", [])
         self.display_name = self.config.get("name", self.name)
 
-        # Per-camera Modbus settings (port selectable in Configure dialog)
+        # Modbus settings
         self.modbus_port = self.config.get("modbus_port", "COM3")
         self.modbus_slave = int(self.config.get("modbus_slave", 1))
 
-        # GPIO controllers
+        # GPIO
         self.control_gpio = None
         self.input_gpio = None
         self.assign_gpio_controllers()
@@ -56,6 +56,13 @@ class CameraWidget(QWidget):
         # Threads
         self.stream_thread: RTSPStreamThread | None = None
         self.modbus_thread: ModbusReaderThread | None = None
+
+        # Recorder
+        self.recorder = CameraRecorder(self.name, fps=20)
+        self.latest_values = {}
+
+        # UI FPS limiter
+        self._last_ui_update = 0
 
         # Build UI
         self.setup_ui()
@@ -65,17 +72,13 @@ class CameraWidget(QWidget):
         self.start_camera_stream()
         self.start_modbus_polling()
 
-        # Status monitor (GPIO input affects button colors)
+        # Status monitor
         self.status_timer = QTimer(self)
         self.status_timer.timeout.connect(self.update_button_colors)
         self.status_timer.start(1000)
 
-    # ----------------------------- GPIO wiring --------------------------------
+    # ---------------- GPIO ----------------
     def assign_gpio_controllers(self):
-        """
-        Map camera names to GPIO pins and create controllers.
-        Keep the mapping centralized for clarity.
-        """
         control_mapping = {"Camera 1": 27, "Camera 2": 22, "Camera 3": 5, "Camera 4": 23}
         input_mapping   = {"Camera 1": 17, "Camera 2": 18, "Camera 3": 24, "Camera 4": 25}
 
@@ -87,7 +90,7 @@ class CameraWidget(QWidget):
         if input_pin is not None:
             self.input_gpio = GPIOController(pin=input_pin, mode="IN")
 
-    # ----------------------------- UI construction ----------------------------
+    # ---------------- UI ----------------
     def setup_ui(self):
         layout = QVBoxLayout()
 
@@ -106,26 +109,20 @@ class CameraWidget(QWidget):
         self.video_label.setMinimumSize(620, 350)
         self.video_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.video_label.setStyleSheet("background-color: black; color: white;")
-        # Toggle fullscreen by double-clicking on the video area
         self.video_label.mouseDoubleClickEvent = self.toggle_fullscreen
         layout.addWidget(self.video_label, stretch=1)
 
-        # Status strip and control buttons
+        # Status strip + control buttons
         layout.addLayout(self.create_status_layout())
         layout.addLayout(self.create_control_buttons())
 
         self.setLayout(layout)
 
     def create_status_layout(self) -> QHBoxLayout:
-        """
-        Creates a simple status strip.
-        Placeholder logic for now; wire real status when available.
-        """
         status_labels = [
             "CAMERA HEALTH", "AIR PRESS", "AIR TEMP",
             "AIR FILT CLOG", "CAM TEMP", "CAMERA REM"
         ]
-        # Demo inputs; first is overall health = all others True
         status_values_raw = [True, False, True, True, True]
         camera_health = all(status_values_raw)
         status_values = [camera_health] + status_values_raw
@@ -180,33 +177,25 @@ class CameraWidget(QWidget):
         row.addWidget(self.view_data_btn)
         return row
 
-    # ----------------------------- Buttons/actions ---------------------------
+    # ---------------- Buttons ----------------
     def update_button_colors(self):
-        """
-        Reflect input GPIO state on button colors.
-        """
         if not self.input_gpio:
             return
 
         is_high = self.input_gpio.read_input()
-
         if is_high:
             self.take_in_btn.setStyleSheet(
-                "QPushButton { background-color: green; font-weight: bold; "
-                "border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
+                "QPushButton { background-color: green; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
             )
             self.take_out_btn.setStyleSheet(
-                "QPushButton { background-color: lightgrey; font-weight: bold; "
-                "border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
+                "QPushButton { background-color: lightgrey; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
             )
         else:
             self.take_in_btn.setStyleSheet(
-                "QPushButton { background-color: lightgrey; font-weight: bold; "
-                "border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
+                "QPushButton { background-color: lightgrey; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
             )
             self.take_out_btn.setStyleSheet(
-                "QPushButton { background-color: red; font-weight: bold; "
-                "border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
+                "QPushButton { background-color: red; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
             )
 
     def handle_camera_insert(self):
@@ -222,13 +211,6 @@ class CameraWidget(QWidget):
             logger.warning(f"No GPIO control assigned for {self.name}")
 
     def configure_camera(self):
-        """
-        Open the configure dialog to edit:
-          - Camera Name
-          - RTSP Link
-          - COM Port (dropdown of detected ports)
-        Persist changes and restart services as needed.
-        """
         dlg = ConfigureCameraDialog(
             current_rtsp=self.rtsp_link,
             current_name=self.display_name,
@@ -240,19 +222,16 @@ class CameraWidget(QWidget):
             new_name = dlg.get_camera_name()
             new_port = dlg.get_com_port()
 
-            # Determine what changed
             name_changed = (new_name or self.name) != self.display_name
             rtsp_changed = new_rtsp != self.rtsp_link
             port_changed = (new_port and new_port != self.modbus_port)
 
-            # Apply changes
             self.rtsp_link = new_rtsp
             self.display_name = new_name or self.name
             self.name_label.setText(self.display_name)
             if new_port:
                 self.modbus_port = new_port
 
-            # Persist
             self.config_manager.update_camera_config(
                 self.name,
                 rtsp=self.rtsp_link,
@@ -271,22 +250,17 @@ class CameraWidget(QWidget):
                 "Updated: " + (", ".join(changed) if changed else "No changes.")
             )
 
-            # Restart RTSP if changed
             if rtsp_changed:
                 if self.stream_thread:
                     self.stream_thread.stop()
                 self.start_camera_stream()
 
-            # Restart Modbus if COM changed
             if port_changed:
                 if self.modbus_thread:
                     self.modbus_thread.stop()
                 self.start_modbus_polling()
 
     def open_data_dialog(self):
-        """
-        Show the 16-row data points chooser (checkbox + label).
-        """
         dlg = DataPointsDialog(selected_points=self.selected_data_points, parent=self)
         if dlg.exec_():
             self.selected_data_points = dlg.get_selected_points()
@@ -298,21 +272,14 @@ class CameraWidget(QWidget):
                 f"Saved data points for {self.name}:\n" + ", ".join(selected_names)
             )
 
-            # If we are in fullscreen, rebuild the sidebar (labels will update live)
             if self.main_window.stack_layout.currentWidget() == self.main_window.fullscreen_frame:
                 self.main_window.show_data_sidebar(self)
 
     def toggle_fullscreen(self, event):
-        """
-        Double-click handler on the video widget to toggle fullscreen view.
-        """
         self.main_window.toggle_camera_fullscreen(self)
 
-    # ----------------------------- RTSP stream --------------------------------
+    # ---------------- RTSP ----------------
     def start_camera_stream(self):
-        """
-        Start/Restart the RTSP thread (if rtsp_link is configured).
-        """
         if not self.rtsp_link:
             logger.warning(f"No RTSP link configured for {self.name}")
             return
@@ -323,12 +290,8 @@ class CameraWidget(QWidget):
         self.stream_thread.stream_failed.connect(self.show_placeholder_logo)
         self.stream_thread.start()
 
-    # ----------------------------- Modbus polling -----------------------------
+    # ---------------- Modbus ----------------
     def start_modbus_polling(self):
-        """
-        Start/Restart the Modbus reader thread for this camera.
-        Uses robust auto-reconnect & last-good cache (see core/modbus_handler.py).
-        """
         if self.modbus_thread:
             try:
                 self.modbus_thread.stop()
@@ -346,22 +309,30 @@ class CameraWidget(QWidget):
             stopbits=1,
             timeout=1.0,
             interval_s=1.0,
-            fail_threshold=5,  # show '--' only after sustained failures
+            fail_threshold=5,
             parent=self,
         )
         self.modbus_thread.data_updated.connect(self.on_modbus_data)
         self.modbus_thread.start()
 
     def on_modbus_data(self, values_by_index: dict):
-        """
-        Receive latest Modbus values {index(1..16): value or '--'} and
-        forward to MainWindow for the active fullscreen camera's sidebar.
-        """
+        self.latest_values = values_by_index
+        self.recorder.update_data_points(values_by_index)
         if hasattr(self.main_window, "update_data_values"):
             self.main_window.update_data_values(self, values_by_index)
 
-    # ----------------------------- Video helpers ------------------------------
+    # ---------------- Frame Handling ----------------
     def update_video_frame(self, frame):
+        # Always record all frames
+        self.recorder.write_frame(frame, self.selected_data_points)
+
+        # Limit UI refresh to ~10 FPS
+        now = time.time()
+        if now - self._last_ui_update < 0.1:  # 100 ms
+            return
+        self._last_ui_update = now
+
+        # Convert frame for UI preview
         rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
@@ -382,9 +353,6 @@ class CameraWidget(QWidget):
         """)
 
     def show_placeholder_logo(self):
-        """
-        Shown when RTSP stream is not configured or has failed permanently.
-        """
         try:
             pixmap = QPixmap("assets/logo.png")
             if pixmap.isNull():
@@ -407,11 +375,8 @@ class CameraWidget(QWidget):
         except Exception as e:
             logger.error(f"Failed to load placeholder image: {e}")
 
-    # ----------------------------- shutdown -----------------------------------
+    # ---------------- Shutdown ----------------
     def closeEvent(self, event):
-        """
-        Ensure all background resources are stopped/cleaned.
-        """
         try:
             if self.stream_thread:
                 self.stream_thread.stop()
@@ -421,5 +386,7 @@ class CameraWidget(QWidget):
                 self.control_gpio.cleanup()
             if self.input_gpio:
                 self.input_gpio.cleanup()
+            if self.recorder:
+                self.recorder.stop()
         finally:
             event.accept()
