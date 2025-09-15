@@ -81,41 +81,38 @@ class CameraRecorder:
 
         # --- Overlay: camera name + datapoints (right side) ---
         overlay_frame = frame.copy()
-        x = w - 120  # shift text block towards right
-        y = 40
+        x_name = w - 300   # camera name further left
+        x_data = w - 300   # data points stay where they are
+        y = 100
 
         # Camera name (top-right, yellow)
         cv2.putText(
             overlay_frame,
             f"{self.camera_name}",
-            (x, y),
+            (x_name, y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,           # font size
+            1.5,           # font size
             (0, 255, 255), # yellow
             2,
             cv2.LINE_AA,
         )
-        y += 30
 
-        # Data points (green, small font)
-        if selected_points:
-            for dp in selected_points:
-                if dp.get("checked"):
-                    idx, name = dp["index"], dp["name"]
-                    val = self.latest_values.get(idx, "--")
-
-                    text = f"{name}: {val}"
-                    cv2.putText(
-                        overlay_frame,
-                        text,
-                        (x, y),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.3,         # smaller font
-                        (0, 255, 0), # green
-                        1,           # thin stroke
-                        cv2.LINE_AA,
-                    )
-                    y += 18
+        # Data points (green, at correct position)
+        y += 40
+        for dp in selected_points:
+            if dp.get("checked"):
+                text = f"{dp['name']}: {self.latest_values.get(dp['index'], '--')}"
+                cv2.putText(
+                    overlay_frame,
+                    text,
+                    (x_data, y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (0, 255, 0),
+                    2,
+                    cv2.LINE_AA,
+                )
+                y += 40
 
         # Ensure frame matches writer size
         overlay_frame = cv2.resize(overlay_frame, self.frame_size)
