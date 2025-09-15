@@ -58,7 +58,11 @@ class CameraWidget(QWidget):
         self.modbus_thread: ModbusReaderThread | None = None
 
         # Recorder
-        self.recorder = CameraRecorder(self.name, fps=20)
+        # ui/camera_widget.py  (inside CameraWidget.__init__)
+
+        rotation_minutes = int(self.config.get("rotation_minutes", 60))  # ✅ read from config
+        self.recorder = CameraRecorder(self.name, fps=20, rotation_minutes=rotation_minutes)
+
         self.latest_values = {}
 
         # UI FPS limiter
@@ -239,6 +243,7 @@ class CameraWidget(QWidget):
                 name=self.display_name,
                 modbus_port=self.modbus_port,
                 modbus_slave=self.modbus_slave,
+                rotation_minutes=self.recorder.rotation_minutes,
             )
 
             changed = []

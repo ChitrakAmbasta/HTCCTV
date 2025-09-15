@@ -144,10 +144,10 @@ class ConfigManager:
         name: Optional[str] = None,
         modbus_port: Optional[str] = None,
         modbus_slave: Optional[int] = None,
+        rotation_minutes: Optional[int] = None,   # ✅ NEW
     ) -> None:
         """
         Upsert fields for one camera. Only provided kwargs are updated.
-        Missing camera entries are created.
         """
         cfg = self.load_config()
         cam = cfg.get(camera_name, {})
@@ -162,6 +162,8 @@ class ConfigManager:
             cam["modbus_port"] = modbus_port
         if modbus_slave is not None:
             cam["modbus_slave"] = int(modbus_slave)
+        if rotation_minutes is not None:   # ✅ NEW
+            cam["rotation_minutes"] = int(rotation_minutes)
 
         # ensure defaults for missing keys
         cam.setdefault("data_points", [])
@@ -169,10 +171,12 @@ class ConfigManager:
         cam.setdefault("rtsp", "")
         cam.setdefault("modbus_port", _default_serial_port())
         cam.setdefault("modbus_slave", 1)
+        cam.setdefault("rotation_minutes", 60)  # ✅ default 1 hour
 
         cfg[camera_name] = cam
         self.save_config(cfg)
 
+        
     def update_multiple(self, updates: Dict[str, Dict[str, Any]]) -> None:
         """
         Batch update multiple cameras.
