@@ -41,7 +41,7 @@ class GPIOController:
             GPIO.setwarnings(False)
 
             if self.mode == "OUT":
-                GPIO.setup(self.pin, GPIO.OUT)
+                GPIO.setup(self.pin, GPIO.OUT, initial=GPIO.LOW)
             elif self.mode == "IN":
                 # ✅ Safe default: pull-down so pin reads LOW unless driven HIGH
                 GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
