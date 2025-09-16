@@ -36,12 +36,16 @@ class GPIOController:
             return
 
         try:
+            # ✅ Always set mode each time to avoid "must setup first" errors
             GPIO.setmode(GPIO.BCM)
             GPIO.setwarnings(False)
+
             if self.mode == "OUT":
                 GPIO.setup(self.pin, GPIO.OUT)
             elif self.mode == "IN":
-                GPIO.setup(self.pin, GPIO.IN)
+                # ✅ Safe default: pull-down so pin reads LOW unless driven HIGH
+                GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
             logger.info(f"GPIO {self.pin} setup as {self.mode}")
         except Exception as e:
             logger.error(f"Failed to setup GPIO {self.pin} as {self.mode}: {e}")
@@ -92,7 +96,7 @@ class GPIOController:
 
         if not RPI_AVAILABLE:
             logger.info(f"(Mock) GPIO {self.pin} read as LOW (default)")
-            return False  # ? Return LOW by default in mock
+            return False
 
         try:
             state = GPIO.input(self.pin)
@@ -101,7 +105,6 @@ class GPIOController:
         except Exception as e:
             logger.error(f"Failed to read input on GPIO {self.pin}: {e}")
             return False
-
 
     def cleanup(self):
         """
