@@ -22,17 +22,18 @@ logger = setup_logger()
 
 class CameraWidget(QWidget):
     """
-    UI for one camera tile:
-      - Handles RTSP stream display
-      - Provides control buttons (insert/retract)
-      - Opens dialogs for configuration and data points
-      - Launches a dedicated ModbusReaderThread for this camera's COM port and forwards
-        values to MainWindow for the fullscreen data sidebar.
-      - Uses CameraRecorder to record video with data points overlay.
-      - Shows Camera Health status with thresholds:
-            Cam Temp < 60
-            Air Press < 3
-            Air Temp < 40
+    UI for one camera tile with:
+      - RTSP stream display
+      - Control buttons (insert/retract)
+      - Data points selection
+      - Modbus polling
+      - Video recording with overlay
+      - Status strip:
+            Cam Temp < threshold
+            Air Press < threshold
+            Air Temp < threshold
+            Air Filt Clog (GPIO IN)
+            Camera Rem (GPIO IN)
     """
 
     def __init__(self, name: str, parent=None):
@@ -55,6 +56,8 @@ class CameraWidget(QWidget):
         # GPIO
         self.control_gpio = None
         self.input_gpio = None
+        self.air_filt_gpio = None
+        self.cam_rem_gpio = None
         self.assign_gpio_controllers()
 
         # Threads
@@ -85,16 +88,24 @@ class CameraWidget(QWidget):
 
     # ---------------- GPIO ----------------
     def assign_gpio_controllers(self):
-        control_mapping = {"Camera 1": 27, "Camera 2": 22, "Camera 3": 5, "Camera 4": 23}
-        input_mapping   = {"Camera 1": 17, "Camera 2": 18, "Camera 3": 24, "Camera 4": 25}
+        control_mapping   = {"Camera 1": 27, "Camera 2": 22, "Camera 3": 5, "Camera 4": 23}
+        input_mapping     = {"Camera 1": 17, "Camera 2": 18, "Camera 3": 24, "Camera 4": 25}
+        air_filt_mapping  = {"Camera 1": 6,  "Camera 2": 12, "Camera 3": 16, "Camera 4": 20}
+        cam_rem_mapping   = {"Camera 1": 13, "Camera 2": 19, "Camera 3": 26, "Camera 4": 21}
 
-        control_pin = control_mapping.get(self.name)
-        input_pin = input_mapping.get(self.name)
+        control_pin   = control_mapping.get(self.name)
+        input_pin     = input_mapping.get(self.name)
+        air_filt_pin  = air_filt_mapping.get(self.name)
+        cam_rem_pin   = cam_rem_mapping.get(self.name)
 
         if control_pin is not None:
             self.control_gpio = GPIOController(pin=control_pin, mode="OUT")
         if input_pin is not None:
             self.input_gpio = GPIOController(pin=input_pin, mode="IN")
+        if air_filt_pin is not None:
+            self.air_filt_gpio = GPIOController(pin=air_filt_pin, mode="IN")
+        if cam_rem_pin is not None:
+            self.cam_rem_gpio = GPIOController(pin=cam_rem_pin, mode="IN")
 
     # ---------------- UI ----------------
     def setup_ui(self):
@@ -173,6 +184,7 @@ class CameraWidget(QWidget):
 
     # ---------------- Status Update ----------------
     def update_button_colors(self):
+        """Update status strip colors based on Modbus values + thresholds + GPIOs."""
         if not self.latest_values:
             return
 
@@ -202,10 +214,14 @@ class CameraWidget(QWidget):
         except Exception:
             air_temp_ok = False
 
-        status_values_raw = [air_press_ok, air_temp_ok, True, cam_temp_ok, True]
+        air_filt_ok = self.air_filt_gpio.read_input() if self.air_filt_gpio else False
+        cam_rem_ok  = self.cam_rem_gpio.read_input() if self.cam_rem_gpio else False
+
+        status_values_raw = [air_press_ok, air_temp_ok, air_filt_ok, cam_temp_ok, cam_rem_ok]
         camera_health = all(status_values_raw)
         status_values = [camera_health] + status_values_raw
 
+        # Update label colors
         for text, is_ok in zip(
             ["CAMERA HEALTH", "AIR PRESS", "AIR TEMP", "AIR FILT CLOG", "CAM TEMP", "CAMERA REM"],
             status_values
@@ -221,7 +237,6 @@ class CameraWidget(QWidget):
                     padding: 3px 8px;
                 }}
             """)
-
 
     # ---------------- Camera Controls ----------------
     def handle_camera_insert(self):
@@ -390,6 +405,10 @@ class CameraWidget(QWidget):
                 self.control_gpio.cleanup()
             if self.input_gpio:
                 self.input_gpio.cleanup()
+            if self.air_filt_gpio:
+                self.air_filt_gpio.cleanup()
+            if self.cam_rem_gpio:
+                self.cam_rem_gpio.cleanup()
             if self.recorder:
                 self.recorder.stop()
         finally:
