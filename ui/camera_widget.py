@@ -90,7 +90,7 @@ class CameraWidget(QWidget):
     def assign_gpio_controllers(self):
         control_mapping   = {"Camera 1": 27, "Camera 2": 22, "Camera 3": 5, "Camera 4": 23}
         input_mapping     = {"Camera 1": 17, "Camera 2": 18, "Camera 3": 24, "Camera 4": 25}
-        air_filt_mapping  = {"Camera 1": 6,  "Camera 2": 12, "Camera 3": 16, "Camera 4": 20}
+        air_filt_mapping  = {"Camera 1": 4,  "Camera 2": 12, "Camera 3": 16, "Camera 4": 20}
         cam_rem_mapping   = {"Camera 1": 13, "Camera 2": 19, "Camera 3": 26, "Camera 4": 21}
 
         control_pin   = control_mapping.get(self.name)
