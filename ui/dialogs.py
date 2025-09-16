@@ -29,6 +29,10 @@ def _default_serial_port() -> str:
 class DataPointsDialog(QDialog):
     """
     Dialog to select and name data points for a camera (16 rows).
+    First 3 names are frozen:
+      1 → Cam Temp
+      2 → Air Press
+      3 → Air Temp
     """
     def __init__(self, selected_points=None, parent=None):
         super().__init__(parent)
@@ -38,6 +42,8 @@ class DataPointsDialog(QDialog):
         self.checkboxes = []
         self.line_edits = []
 
+        self.frozen_names = {1: "Cam Temp", 2: "Air Press", 3: "Air Temp"}
+
         self.setup_ui()
 
     def setup_ui(self):
@@ -46,12 +52,14 @@ class DataPointsDialog(QDialog):
         for i in range(1, 17):
             default_name = f"Data Point {i}"
             checked = False
-            custom_name = default_name
+            custom_name = self.frozen_names.get(i, default_name)
 
+            # Load previous state if available
             for entry in self.selected_points:
                 if entry.get("index") == i:
                     checked = entry.get("checked", False)
-                    custom_name = entry.get("name", default_name)
+                    if i not in self.frozen_names:  # keep frozen names locked
+                        custom_name = entry.get("name", default_name)
                     break
 
             checkbox = QCheckBox()
@@ -59,6 +67,11 @@ class DataPointsDialog(QDialog):
 
             line_edit = QLineEdit()
             line_edit.setText(custom_name)
+
+            # Freeze first 3 names
+            if i in self.frozen_names:
+                line_edit.setReadOnly(True)
+                line_edit.setStyleSheet("background-color: #eee; color: #555;")
 
             self.checkboxes.append(checkbox)
             self.line_edits.append(line_edit)
@@ -76,8 +89,13 @@ class DataPointsDialog(QDialog):
         self.setLayout(layout)
 
     def get_selected_points(self):
+        """Return list of {index, checked, name} with frozen names enforced."""
         return [
-            {"index": i, "checked": cb.isChecked(), "name": le.text().strip()}
+            {
+                "index": i,
+                "checked": cb.isChecked(),
+                "name": self.frozen_names.get(i, le.text().strip())
+            }
             for i, (cb, le) in enumerate(zip(self.checkboxes, self.line_edits), start=1)
         ]
 
@@ -125,10 +143,8 @@ class ConfigureCameraDialog(QDialog):
 
             # Auto-preselect logic
             if self._current_com and self._current_com in self._ports:
-                # If config already has a port, preselect it
                 self.port_combo.setCurrentIndex(self._ports.index(self._current_com))
             elif _default_serial_port() in self._ports:
-                # Otherwise, auto-select the default for this OS
                 self.port_combo.setCurrentIndex(self._ports.index(_default_serial_port()))
 
         layout.addWidget(self.port_combo)

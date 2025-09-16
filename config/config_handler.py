@@ -144,11 +144,9 @@ class ConfigManager:
         name: Optional[str] = None,
         modbus_port: Optional[str] = None,
         modbus_slave: Optional[int] = None,
-        rotation_minutes: Optional[int] = None,   # ✅ NEW
+        rotation_minutes: Optional[int] = None,
+        thresholds: Optional[Dict[str, float]] = None,   # ✅ NEW
     ) -> None:
-        """
-        Upsert fields for one camera. Only provided kwargs are updated.
-        """
         cfg = self.load_config()
         cam = cfg.get(camera_name, {})
 
@@ -162,19 +160,27 @@ class ConfigManager:
             cam["modbus_port"] = modbus_port
         if modbus_slave is not None:
             cam["modbus_slave"] = int(modbus_slave)
-        if rotation_minutes is not None:   # ✅ NEW
+        if rotation_minutes is not None:
             cam["rotation_minutes"] = int(rotation_minutes)
+        if thresholds is not None:                     # ✅ NEW
+            cam["thresholds"] = thresholds
 
-        # ensure defaults for missing keys
+        # ensure defaults
         cam.setdefault("data_points", [])
         cam.setdefault("name", camera_name)
         cam.setdefault("rtsp", "")
         cam.setdefault("modbus_port", _default_serial_port())
         cam.setdefault("modbus_slave", 1)
-        cam.setdefault("rotation_minutes", 60)  # ✅ default 1 hour
+        cam.setdefault("rotation_minutes", 60)
+        cam.setdefault("thresholds", {                # ✅ NEW
+            "cam_temp_max": 60,
+            "air_press_max": 3,
+            "air_temp_max": 40,
+        })
 
         cfg[camera_name] = cam
         self.save_config(cfg)
+
 
         
     def update_multiple(self, updates: Dict[str, Dict[str, Any]]) -> None:

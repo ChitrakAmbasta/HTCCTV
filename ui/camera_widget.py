@@ -29,6 +29,10 @@ class CameraWidget(QWidget):
       - Launches a dedicated ModbusReaderThread for this camera's COM port and forwards
         values to MainWindow for the fullscreen data sidebar.
       - Uses CameraRecorder to record video with data points overlay.
+      - Shows Camera Health status with thresholds:
+            Cam Temp < 60
+            Air Press < 3
+            Air Temp < 40
     """
 
     def __init__(self, name: str, parent=None):
@@ -58,9 +62,7 @@ class CameraWidget(QWidget):
         self.modbus_thread: ModbusReaderThread | None = None
 
         # Recorder
-        # ui/camera_widget.py  (inside CameraWidget.__init__)
-
-        rotation_minutes = int(self.config.get("rotation_minutes", 60))  # ✅ read from config
+        rotation_minutes = int(self.config.get("rotation_minutes", 60))
         self.recorder = CameraRecorder(self.name, fps=20, rotation_minutes=rotation_minutes)
 
         self.latest_values = {}
@@ -123,32 +125,20 @@ class CameraWidget(QWidget):
         self.setLayout(layout)
 
     def create_status_layout(self) -> QHBoxLayout:
-        status_labels = [
-            "CAMERA HEALTH", "AIR PRESS", "AIR TEMP",
-            "AIR FILT CLOG", "CAM TEMP", "CAMERA REM"
-        ]
-        status_values_raw = [True, False, True, True, True]
-        camera_health = all(status_values_raw)
-        status_values = [camera_health] + status_values_raw
-
+        """Create labels for Camera Health and related statuses."""
+        self.status_labels_map = {}
         row = QHBoxLayout()
         row.setSpacing(6)
-        for text, is_ok in zip(status_labels, status_values):
+
+        labels = ["CAMERA HEALTH", "AIR PRESS", "AIR TEMP", "AIR FILT CLOG", "CAM TEMP", "CAMERA REM"]
+        for text in labels:
             label = QLabel(text)
-            color = "#8BC34A" if is_ok else "#f44336"
-            label.setStyleSheet(f"""
-                QLabel {{
-                    background-color: {color};
-                    font-weight: bold;
-                    font-size: 10pt;
-                    border: 1px solid #ccc;
-                    border-radius: 3px;
-                    padding: 3px 8px;
-                }}
-            """)
             label.setAlignment(Qt.AlignCenter)
             label.setFixedHeight(28)
+            label.setStyleSheet("background-color: lightgrey;")
             row.addWidget(label)
+            self.status_labels_map[text] = label
+
         return row
 
     def create_control_buttons(self) -> QHBoxLayout:
@@ -181,27 +171,59 @@ class CameraWidget(QWidget):
         row.addWidget(self.view_data_btn)
         return row
 
-    # ---------------- Buttons ----------------
+    # ---------------- Status Update ----------------
     def update_button_colors(self):
-        if not self.input_gpio:
+        if not self.latest_values:
             return
 
-        is_high = self.input_gpio.read_input()
-        if is_high:
-            self.take_in_btn.setStyleSheet(
-                "QPushButton { background-color: green; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
-            )
-            self.take_out_btn.setStyleSheet(
-                "QPushButton { background-color: lightgrey; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
-            )
-        else:
-            self.take_in_btn.setStyleSheet(
-                "QPushButton { background-color: lightgrey; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
-            )
-            self.take_out_btn.setStyleSheet(
-                "QPushButton { background-color: red; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 6px 12px; }"
-            )
+        # Load thresholds from config
+        th = self.config.get("thresholds", {
+            "cam_temp_max": 60,
+            "air_press_max": 3,
+            "air_temp_max": 40,
+        })
 
+        cam_temp = self.latest_values.get(1, "--")
+        air_press = self.latest_values.get(2, "--")
+        air_temp = self.latest_values.get(3, "--")
+
+        try:
+            cam_temp_ok = float(cam_temp) < th["cam_temp_max"]
+        except Exception:
+            cam_temp_ok = False
+
+        try:
+            air_press_ok = float(air_press) < th["air_press_max"]
+        except Exception:
+            air_press_ok = False
+
+        try:
+            air_temp_ok = float(air_temp) < th["air_temp_max"]
+        except Exception:
+            air_temp_ok = False
+
+        status_values_raw = [air_press_ok, air_temp_ok, True, cam_temp_ok, True]
+        camera_health = all(status_values_raw)
+        status_values = [camera_health] + status_values_raw
+
+        for text, is_ok in zip(
+            ["CAMERA HEALTH", "AIR PRESS", "AIR TEMP", "AIR FILT CLOG", "CAM TEMP", "CAMERA REM"],
+            status_values
+        ):
+            color = "#8BC34A" if is_ok else "#f44336"
+            self.status_labels_map[text].setStyleSheet(f"""
+                QLabel {{
+                    background-color: {color};
+                    font-weight: bold;
+                    font-size: 10pt;
+                    border: 1px solid #ccc;
+                    border-radius: 3px;
+                    padding: 3px 8px;
+                }}
+            """)
+
+
+    # ---------------- Camera Controls ----------------
     def handle_camera_insert(self):
         if self.control_gpio:
             self.control_gpio.insert_camera()
@@ -226,10 +248,6 @@ class CameraWidget(QWidget):
             new_name = dlg.get_camera_name()
             new_port = dlg.get_com_port()
 
-            name_changed = (new_name or self.name) != self.display_name
-            rtsp_changed = new_rtsp != self.rtsp_link
-            port_changed = (new_port and new_port != self.modbus_port)
-
             self.rtsp_link = new_rtsp
             self.display_name = new_name or self.name
             self.name_label.setText(self.display_name)
@@ -246,21 +264,12 @@ class CameraWidget(QWidget):
                 rotation_minutes=self.recorder.rotation_minutes,
             )
 
-            changed = []
-            if name_changed: changed.append("Name")
-            if rtsp_changed: changed.append("RTSP")
-            if port_changed: changed.append("COM")
-            QMessageBox.information(
-                self, "Saved",
-                "Updated: " + (", ".join(changed) if changed else "No changes.")
-            )
-
-            if rtsp_changed:
+            if new_rtsp:
                 if self.stream_thread:
                     self.stream_thread.stop()
                 self.start_camera_stream()
 
-            if port_changed:
+            if new_port:
                 if self.modbus_thread:
                     self.modbus_thread.stop()
                 self.start_modbus_polling()
@@ -270,12 +279,6 @@ class CameraWidget(QWidget):
         if dlg.exec_():
             self.selected_data_points = dlg.get_selected_points()
             self.config_manager.update_camera_config(self.name, data_points=self.selected_data_points)
-
-            selected_names = [dp["name"] for dp in self.selected_data_points if dp.get("checked")]
-            QMessageBox.information(
-                self, "Data Points Saved",
-                f"Saved data points for {self.name}:\n" + ", ".join(selected_names)
-            )
 
             if self.main_window.stack_layout.currentWidget() == self.main_window.fullscreen_frame:
                 self.main_window.show_data_sidebar(self)
@@ -328,16 +331,12 @@ class CameraWidget(QWidget):
 
     # ---------------- Frame Handling ----------------
     def update_video_frame(self, frame):
-        # Always record all frames
         self.recorder.write_frame(frame, self.selected_data_points)
-
-        # Limit UI refresh to ~10 FPS
         now = time.time()
-        if now - self._last_ui_update < 0.1:  # 100 ms
+        if now - self._last_ui_update < 0.1:
             return
         self._last_ui_update = now
 
-        # Convert frame for UI preview
         rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
