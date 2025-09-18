@@ -26,21 +26,6 @@ def _default_serial_port() -> str:
 class ConfigManager:
     """
     Manages loading, saving, and updating camera configuration stored in JSON.
-
-    Schema (per camera):
-    {
-        "<Camera N>": {
-            "name": "Display Name",
-            "rtsp": "rtsp://...",
-            "data_points": [
-                {"index": 1, "checked": true, "name": "Temp"},
-                ...
-            ],
-            "modbus_port": "/dev/ttyUSB0",
-            "modbus_slave": 1
-        },
-        ...
-    }
     """
 
     CONFIG_DIR = Path.cwd() / "config"
@@ -51,9 +36,7 @@ class ConfigManager:
         self.ensure_config_file()
 
     def ensure_config_file(self) -> None:
-        """
-        Ensure config directory/file exist. Create an empty JSON {} if missing.
-        """
+        """Ensure config directory/file exist. Create an empty JSON {} if missing."""
         try:
             self.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
             if not self.CONFIG_FILE.exists():
@@ -64,9 +47,7 @@ class ConfigManager:
 
     # ----------------------- IO helpers --------------------
     def _atomic_write(self, path: Path, data: Dict[str, Any]) -> None:
-        """
-        Safely write JSON to disk using a temp file + replace to avoid corruption.
-        """
+        """Safely write JSON to disk using a temp file + replace to avoid corruption."""
         try:
             with tempfile.NamedTemporaryFile("w", delete=False, dir=str(path.parent), suffix=".tmp") as tf:
                 json.dump(data, tf, indent=4)
@@ -78,9 +59,7 @@ class ConfigManager:
 
     # ------------------------ CRUD -------------------------
     def load_config(self) -> Dict[str, Any]:
-        """
-        Load the entire config dict. Returns {} on error.
-        """
+        """Load the entire config dict. Returns {} on error."""
         try:
             with open(self.CONFIG_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -99,9 +78,7 @@ class ConfigManager:
             return {}
 
     def save_config(self, config: Dict[str, Any]) -> None:
-        """
-        Save the provided config dict to disk atomically.
-        """
+        """Save the provided config dict to disk atomically."""
         try:
             self._atomic_write(self.CONFIG_FILE, config)
             logger.info("Camera config saved successfully.")
@@ -110,22 +87,16 @@ class ConfigManager:
 
     # --------------------- camera-level ops ----------------
     def get_camera_config(self, camera_name: str) -> Dict[str, Any]:
-        """
-        Return a single camera's config (or empty dict if not found).
-        """
+        """Return a single camera's config (or empty dict if not found)."""
         cfg = self.load_config()
         return cfg.get(camera_name, {})
 
     def list_cameras(self) -> List[str]:
-        """
-        Return a list of configured camera names (keys).
-        """
+        """Return a list of configured camera names (keys)."""
         return list(self.load_config().keys())
 
     def delete_camera(self, camera_name: str) -> None:
-        """
-        Remove a camera entry from the config if present.
-        """
+        """Remove a camera entry from the config if present."""
         cfg = self.load_config()
         if camera_name in cfg:
             del cfg[camera_name]
@@ -144,17 +115,23 @@ class ConfigManager:
         name: Optional[str] = None,
         modbus_port: Optional[str] = None,
         modbus_slave: Optional[int] = None,
-        rotation_minutes: Optional[int] = None,   # ✅ NEW
+        rotation_minutes: Optional[int] = None,
     ) -> None:
-        """
-        Upsert fields for one camera. Only provided kwargs are updated.
-        """
+        """Upsert fields for one camera. Only provided kwargs are updated."""
         cfg = self.load_config()
         cam = cfg.get(camera_name, {})
 
         if rtsp is not None:
             cam["rtsp"] = rtsp
         if data_points is not None:
+            # 🔒 Enforce fixed names for first 3 data points
+            for dp in data_points:
+                if dp["index"] == 1:
+                    dp["name"] = "Cam Temp"
+                elif dp["index"] == 2:
+                    dp["name"] = "Air Press"
+                elif dp["index"] == 3:
+                    dp["name"] = "Air Temp"
             cam["data_points"] = data_points
         if name is not None:
             cam["name"] = name
@@ -162,7 +139,7 @@ class ConfigManager:
             cam["modbus_port"] = modbus_port
         if modbus_slave is not None:
             cam["modbus_slave"] = int(modbus_slave)
-        if rotation_minutes is not None:   # ✅ NEW
+        if rotation_minutes is not None:
             cam["rotation_minutes"] = int(rotation_minutes)
 
         # ensure defaults for missing keys
@@ -171,21 +148,27 @@ class ConfigManager:
         cam.setdefault("rtsp", "")
         cam.setdefault("modbus_port", _default_serial_port())
         cam.setdefault("modbus_slave", 1)
-        cam.setdefault("rotation_minutes", 60)  # ✅ default 1 hour
+        cam.setdefault("rotation_minutes", 60)
 
         cfg[camera_name] = cam
         self.save_config(cfg)
 
-        
     def update_multiple(self, updates: Dict[str, Dict[str, Any]]) -> None:
-        """
-        Batch update multiple cameras.
-        """
+        """Batch update multiple cameras."""
         cfg = self.load_config()
         for cam_name, fields in updates.items():
             cam = cfg.get(cam_name, {})
             for k, v in fields.items():
                 cam[k] = v
+            # 🔒 Enforce fixed names for first 3 data points
+            if "data_points" in cam:
+                for dp in cam["data_points"]:
+                    if dp["index"] == 1:
+                        dp["name"] = "Cam Temp"
+                    elif dp["index"] == 2:
+                        dp["name"] = "Air Press"
+                    elif dp["index"] == 3:
+                        dp["name"] = "Air Temp"
             # maintain sane defaults
             cam.setdefault("data_points", [])
             cam.setdefault("name", cam_name)
@@ -196,9 +179,7 @@ class ConfigManager:
         self.save_config(cfg)
 
     def remove_keys(self, camera_name: str, keys: List[str]) -> None:
-        """
-        Remove specific keys from a camera config.
-        """
+        """Remove specific keys from a camera config."""
         cfg = self.load_config()
         cam = cfg.get(camera_name)
         if not cam:

@@ -34,3 +34,12 @@ class CameraController:
             camera_widget = CameraWidget(name=cam_name, parent=self.main_window)
             self.main_window.grid_layout.addWidget(camera_widget, *pos)
             self.camera_widgets.append(camera_widget)
+
+    def finalize_all_recorders(self):
+        """Finalize all active camera recorders (rename _tmp to final)."""
+        for cam in self.camera_widgets:
+            try:
+                if cam.recorder:
+                    cam.recorder.stop()
+            except Exception as e:
+                print(f"[CameraController] Failed to finalize recorder for {cam.name}: {e}")

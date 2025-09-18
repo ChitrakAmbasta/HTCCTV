@@ -46,7 +46,7 @@ class CameraRecorder:
         if end.date() != start.date():
             end = start.replace(hour=23, minute=59)
 
-        filename = f"{start.strftime('%H-%M')}_{end.strftime('%H-%M')}.avi"
+        filename = f"{start.strftime('%H_%M')}__{end.strftime('%H_%M')}.avi"
         filepath = date_folder / filename
 
         fourcc = cv2.VideoWriter_fourcc(*"XVID")
@@ -155,11 +155,11 @@ class CameraRecorder:
             date_folder = self._get_date_folder()
 
             # old planned filename
-            old_name = f"{self.current_start.strftime('%H-%M')}_{self.current_end.strftime('%H-%M')}.avi"
+            old_name = f"{self.current_start.strftime('%H_%M')}__{self.current_end.strftime('%H_%M')}.avi"
             old_path = date_folder / old_name
 
             # new corrected filename based on actual end time
-            new_name = f"{self.current_start.strftime('%H-%M')}_{actual_end.strftime('%H-%M')}.avi"
+            new_name = f"{self.current_start.strftime('%H_%M')}__{actual_end.strftime('%H_%M')}.avi"
             new_path = date_folder / new_name
 
             try:
@@ -172,4 +172,3 @@ class CameraRecorder:
                 logger.error(f"[{self.camera_name}] Failed to rename recording file: {e}")
 
             logger.info(f"[{self.camera_name}] Stopped recording.")
-

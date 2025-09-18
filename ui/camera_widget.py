@@ -125,9 +125,9 @@ class CameraWidget(QWidget):
     def create_status_layout(self) -> QHBoxLayout:
         status_labels = [
             "CAMERA HEALTH", "AIR PRESS", "AIR TEMP",
-            "AIR FILT CLOG", "CAM TEMP", "CAMERA REM"
+            "CAM TEMP", "CAMERA REM"
         ]
-        status_values_raw = [True, False, True, True, True]
+        status_values_raw = [True, False, True, True]
         camera_health = all(status_values_raw)
         status_values = [camera_health] + status_values_raw
 

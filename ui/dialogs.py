@@ -44,14 +44,24 @@ class DataPointsDialog(QDialog):
         layout = QVBoxLayout()
 
         for i in range(1, 17):
-            default_name = f"Data Point {i}"
+            if i == 1:
+                default_name = "Cam Temp"
+            elif i == 2:
+                default_name = "Air Press"
+            elif i == 3:
+                default_name = "Air Temp"
+            else:
+                default_name = f"Data Point {i}"
+
             checked = False
             custom_name = default_name
 
             for entry in self.selected_points:
                 if entry.get("index") == i:
                     checked = entry.get("checked", False)
-                    custom_name = entry.get("name", default_name)
+                    # only allow custom names for points > 3
+                    if i > 3:
+                        custom_name = entry.get("name", default_name)
                     break
 
             checkbox = QCheckBox()
@@ -60,6 +70,11 @@ class DataPointsDialog(QDialog):
             line_edit = QLineEdit()
             line_edit.setText(custom_name)
 
+            # 🔒 Freeze & grey-out first 3 names
+            if i <= 3:
+                line_edit.setReadOnly(True)
+                line_edit.setStyleSheet("color: grey;")
+
             self.checkboxes.append(checkbox)
             self.line_edits.append(line_edit)
 
@@ -67,6 +82,8 @@ class DataPointsDialog(QDialog):
             row.addWidget(checkbox)
             row.addWidget(line_edit)
             layout.addLayout(row)
+
+
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
