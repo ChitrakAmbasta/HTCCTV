@@ -116,6 +116,7 @@ class ConfigManager:
         modbus_port: Optional[str] = None,
         modbus_slave: Optional[int] = None,
         rotation_minutes: Optional[int] = None,
+        thresholds: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Upsert fields for one camera. Only provided kwargs are updated."""
         cfg = self.load_config()
@@ -141,6 +142,12 @@ class ConfigManager:
             cam["modbus_slave"] = int(modbus_slave)
         if rotation_minutes is not None:
             cam["rotation_minutes"] = int(rotation_minutes)
+        if thresholds is not None:
+            cam["thresholds"] = {
+                "cam_temp_max": int(thresholds.get("cam_temp_max", 60)),
+                "air_press_max": float(thresholds.get("air_press_max", 3)),
+                "air_temp_max": int(thresholds.get("air_temp_max", 40)),
+            }
 
         # ensure defaults for missing keys
         cam.setdefault("data_points", [])
@@ -149,6 +156,11 @@ class ConfigManager:
         cam.setdefault("modbus_port", _default_serial_port())
         cam.setdefault("modbus_slave", 1)
         cam.setdefault("rotation_minutes", 60)
+        cam.setdefault("thresholds", {
+            "cam_temp_max": 60,
+            "air_press_max": 3,
+            "air_temp_max": 40,
+        })
 
         cfg[camera_name] = cam
         self.save_config(cfg)
@@ -175,6 +187,12 @@ class ConfigManager:
             cam.setdefault("rtsp", "")
             cam.setdefault("modbus_port", _default_serial_port())
             cam.setdefault("modbus_slave", 1)
+            cam.setdefault("rotation_minutes", 60)
+            cam.setdefault("thresholds", {
+                "cam_temp_max": 60,
+                "air_press_max": 3,
+                "air_temp_max": 40,
+            })
             cfg[cam_name] = cam
         self.save_config(cfg)
 
