@@ -30,6 +30,7 @@ class CameraWidget(QWidget):
         values to MainWindow for the fullscreen data sidebar.
       - Uses CameraRecorder to record video with data points overlay.
       - Evaluates Camera Health from Modbus datapoints using JSON-configured thresholds.
+      - Reads CAMERA REM (inside/outside) state from a dedicated GPIO input pin.
     """
 
     def __init__(self, name: str, parent=None):
@@ -60,6 +61,7 @@ class CameraWidget(QWidget):
         # GPIO
         self.control_gpio = None
         self.input_gpio = None
+        self.rem_gpio = None
         self.assign_gpio_controllers()
 
         # Threads
@@ -92,14 +94,18 @@ class CameraWidget(QWidget):
     def assign_gpio_controllers(self):
         control_mapping = {"Camera 1": 27, "Camera 2": 22, "Camera 3": 5, "Camera 4": 23}
         input_mapping   = {"Camera 1": 17, "Camera 2": 18, "Camera 3": 24, "Camera 4": 25}
+        rem_mapping     = {"Camera 1": 16, "Camera 2": 19, "Camera 3": 26, "Camera 4": 20}  
 
         control_pin = control_mapping.get(self.name)
-        input_pin = input_mapping.get(self.name)
+        input_pin   = input_mapping.get(self.name)
+        rem_pin     = rem_mapping.get(self.name)
 
         if control_pin is not None:
             self.control_gpio = GPIOController(pin=control_pin, mode="OUT")
         if input_pin is not None:
             self.input_gpio = GPIOController(pin=input_pin, mode="IN")
+        if rem_pin is not None:
+            self.rem_gpio = GPIOController(pin=rem_pin, mode="IN")
 
     # ---------------- UI ----------------
     def setup_ui(self):
@@ -163,7 +169,7 @@ class CameraWidget(QWidget):
         """
 
     def update_status_labels(self):
-        """Update health labels using live Modbus datapoints and thresholds."""
+        """Update health labels using live Modbus datapoints and GPIO for CAMERA REM."""
         cam_temp = self.latest_values.get(1, "--")
         air_press = self.latest_values.get(2, "--")
         air_temp = self.latest_values.get(3, "--")
@@ -181,7 +187,15 @@ class CameraWidget(QWidget):
         except:
             air_temp_ok = False
 
-        status_values_raw = [air_press_ok, air_temp_ok, cam_temp_ok, True]
+        # CAMERA REM from GPIO (default False if not assigned)
+        rem_ok = False
+        if self.rem_gpio:
+            try:
+                rem_ok = self.rem_gpio.read_input()
+            except Exception as e:
+                logger.warning(f"Failed to read CAMERA REM GPIO for {self.name}: {e}")
+
+        status_values_raw = [air_press_ok, air_temp_ok, cam_temp_ok, rem_ok]
         camera_health = all(status_values_raw)
         status_values = [camera_health] + status_values_raw
 
@@ -245,6 +259,7 @@ class CameraWidget(QWidget):
         row.addWidget(self.view_data_btn)
         return row
 
+    # ---------------- Config / Data Points ----------------
     def handle_camera_insert(self):
         if self.control_gpio:
             self.control_gpio.insert_camera()
@@ -287,7 +302,7 @@ class CameraWidget(QWidget):
                 modbus_port=self.modbus_port,
                 modbus_slave=self.modbus_slave,
                 rotation_minutes=self.recorder.rotation_minutes,
-                thresholds=self.thresholds,   # ✅ persist thresholds
+                thresholds=self.thresholds,
             )
 
             changed = []
@@ -326,10 +341,10 @@ class CameraWidget(QWidget):
             if self.main_window.stack_layout.currentWidget() == self.main_window.fullscreen_frame:
                 self.main_window.show_data_sidebar(self)
 
+    # ---------------- RTSP ----------------
     def toggle_fullscreen(self, event):
         self.main_window.toggle_camera_fullscreen(self)
 
-    # ---------------- RTSP ----------------
     def start_camera_stream(self):
         if not self.rtsp_link:
             logger.warning(f"No RTSP link configured for {self.name}")
@@ -437,6 +452,8 @@ class CameraWidget(QWidget):
                 self.control_gpio.cleanup()
             if self.input_gpio:
                 self.input_gpio.cleanup()
+            if self.rem_gpio:
+                self.rem_gpio.cleanup()
             if self.recorder:
                 self.recorder.stop()
         finally:
