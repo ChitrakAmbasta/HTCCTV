@@ -30,6 +30,10 @@ class CameraRecorder:
         self.current_end = None
         self.latest_values = {}
 
+        # Sidebar buffer (reusable)
+        self.sidebar_width = 256
+        self.sidebar_canvas = None
+
         # Thread + queue
         self.queue = queue.Queue(maxsize=60)  # drop if backlog
         self.running = True
@@ -84,7 +88,6 @@ class CameraRecorder:
     def _process_frame(self, frame, selected_points):
         """Handles scaling + sidebar + writing."""
 
-        h, w, _ = frame.shape
         now = datetime.now()
 
         # Init/rotate writer
@@ -100,7 +103,7 @@ class CameraRecorder:
 
         # Sidebar active?
         active_points = [dp for dp in (selected_points or []) if dp.get("checked")]
-        sidebar_width = 256 if active_points else 0
+        sidebar_width = self.sidebar_width if active_points else 0
         video_width = self.frame_size[0] - sidebar_width
         target_h = self.frame_size[1]
 
@@ -108,8 +111,16 @@ class CameraRecorder:
             # Scale video to fit left area
             video_resized = cv2.resize(frame, (video_width, target_h))
 
-            # White canvas
-            composite = np.ones((target_h, self.frame_size[0], 3), dtype=np.uint8) * 255
+            # --- Reuse sidebar canvas ---
+            if self.sidebar_canvas is None or self.sidebar_canvas.shape[0] != target_h:
+                self.sidebar_canvas = np.ones(
+                    (target_h, self.frame_size[0], 3), dtype=np.uint8
+                ) * 255
+
+            # Copy reusable canvas
+            composite = self.sidebar_canvas.copy()
+
+            # Place video on left
             composite[:, :video_width] = video_resized
 
             # Sidebar drawing
