@@ -179,7 +179,7 @@ class CameraWidget(QWidget):
         except:
             cam_temp_ok = False
         try:
-            air_press_ok = float(air_press) <= self.thresholds["air_press_max"]
+            air_press_ok = float(air_press) >= self.thresholds["air_press_max"]
         except:
             air_press_ok = False
         try:

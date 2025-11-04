@@ -1,4 +1,8 @@
 **/__pycache__/
 config/camera_config.json
-logs/
+/logs
 /recordings
+/dist
+/build
+HTCCTV.spec
+requirements.txt
