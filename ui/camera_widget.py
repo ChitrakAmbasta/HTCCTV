@@ -179,7 +179,7 @@ class CameraWidget(QWidget):
         except:
             cam_temp_ok = False
         try:
-            air_press_ok = float(air_press) <= self.thresholds["air_press_max"]
+            air_press_ok = float(air_press) >= self.thresholds["air_press_max"]
         except:
             air_press_ok = False
         try:
@@ -354,6 +354,7 @@ class CameraWidget(QWidget):
         self.stream_thread.frame_received.connect(self.update_video_frame)
         self.stream_thread.reconnecting.connect(self.show_reconnecting_message)
         self.stream_thread.stream_failed.connect(self.show_placeholder_logo)
+        self.stream_thread.fps_detected.connect(self.recorder.set_fps) 
         self.stream_thread.start()
 
     # ---------------- Modbus ----------------

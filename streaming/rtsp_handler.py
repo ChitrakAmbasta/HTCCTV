@@ -17,12 +17,14 @@ class RTSPStreamThread(QThread):
 
     frame_received = pyqtSignal(np.ndarray)
     reconnecting = pyqtSignal()
-    stream_failed = pyqtSignal()  # ✅ New signal if unable to reconnect after timeout
+    stream_failed = pyqtSignal()
+    fps_detected = pyqtSignal(float)       # 🔹 new signal
 
     def __init__(self, rtsp_url, parent=None):
         super().__init__(parent)
         self.rtsp_url = rtsp_url
         self.running = True
+        self._fps_emitted = False          # track first fps emit
 
     def run(self):
         """
@@ -40,17 +42,26 @@ class RTSPStreamThread(QThread):
                     start_time = time.time()
 
                 elapsed_time = time.time() - start_time
-                if elapsed_time > 60:  # 1 minute timeout
+                if elapsed_time > 60:
                     logger.error(f"RTSP reconnect timeout after {elapsed_time:.1f} seconds.")
-                    self.stream_failed.emit()  # 🔔 Notify UI of permanent failure
+                    self.stream_failed.emit()
                     break
 
-                self.reconnecting.emit()  # 🔔 Notify UI still trying
+                self.reconnecting.emit()
                 time.sleep(5)
                 continue
 
+            # 🔹 Detect FPS and emit once
+            if not self._fps_emitted:
+                fps = cap.get(cv2.CAP_PROP_FPS) or 0.0
+                if fps <= 0 or fps > 120:   # sanity clamp
+                    fps = 25.0
+                logger.info(f"Detected RTSP FPS = {fps:.2f}")
+                self.fps_detected.emit(fps)
+                self._fps_emitted = True
+
             logger.info(f"RTSP stream started: {self.rtsp_url}")
-            start_time = None  # Reset timer once successful
+            start_time = None
 
             while self.running:
                 ret, frame = cap.read()
@@ -58,7 +69,7 @@ class RTSPStreamThread(QThread):
                     self.frame_received.emit(frame)
                 else:
                     logger.warning("Frame read failed. Attempting to reconnect...")
-                    break  # Exit inner loop to reconnect
+                    break  # reconnect
 
             cap.release()
 
@@ -70,8 +81,6 @@ class RTSPStreamThread(QThread):
                 time.sleep(5)
 
     def stop(self):
-        """
-        Gracefully stops the streaming thread.
-        """
+        """Gracefully stops the streaming thread."""
         self.running = False
         self.wait()
