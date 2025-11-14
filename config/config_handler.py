@@ -207,3 +207,31 @@ class ConfigManager:
             cam.pop(k, None)
         cfg[camera_name] = cam
         self.save_config(cfg)
+
+    def get_cleanup_policy(self) -> dict:
+        """
+        Return global cleanup policy from camera_config.json.
+        If missing, automatically create it with safe defaults.
+        """
+        cfg = self.load_config()
+
+        # Auto-create the global cleanup section if not found
+        if "_global_cleanup" not in cfg:
+            cfg["_global_cleanup"] = {"retention_days": 7, "min_free_gb": 5}
+            try:
+                self.save_config(cfg)
+                logger.info("Added default _global_cleanup section to camera_config.json")
+            except Exception as e:
+                logger.warning(f"Failed to auto-add _global_cleanup section: {e}")
+
+        section = cfg.get("_global_cleanup", {})
+        try:
+            return {
+                "retention_days": int(section.get("retention_days", 7)),
+                "min_free_gb": float(section.get("min_free_gb", 5))
+            }
+        except Exception:
+            logger.warning("Invalid values in _global_cleanup section, using defaults.")
+            return {"retention_days": 7, "min_free_gb": 5}
+
+

@@ -59,15 +59,30 @@ class CameraRecorder:
         return date_folder
 
     # ---------------- Writer management -------------
-    def _format_hh_mm(self, dt: datetime) -> str:
-        return dt.strftime("%H_%M")
-
     def _open_new_writer(self, start: datetime, end: datetime):
         """
         Open a new AVI file for [start, end). If end crosses midnight,
         we still end at 00:00 next day, but the filename shows ...__23_59
         and the file is stored under the start date's folder.
         """
+
+        # Preflight cleanup check — ensure disk has enough free space before recording
+        try:
+            from config.config_handler import ConfigManager
+            from core.cleanup_manager import CleanupManager
+
+            cfg_mgr = ConfigManager()
+            cleanup_cfg = cfg_mgr.get_cleanup_policy()
+
+            CleanupManager(
+                min_free_gb=cleanup_cfg["min_free_gb"],
+                retention_days=cleanup_cfg["retention_days"]
+            ).run_cleanup()
+
+        except Exception as e:
+            logger.warning(f"[{self.camera_name}] Preflight cleanup failed: {e}")
+
+        # Proceed to create the date folder and writer
         folder = self._get_date_folder(start)
 
         # For display name: if crosses midnight, show 23_59 for the end label.
@@ -91,6 +106,7 @@ class CameraRecorder:
             )
 
         self.current_start, self.current_end = start, end
+
 
     # ---------------- Data updates ------------------
     def update_data_points(self, values: dict):
