@@ -24,10 +24,6 @@ class ApplicationManager:
         self.app = QApplication(sys.argv)
         self.main_window = MainWindow()
 
-        # Initialize CameraController and attach it to MainWindow
-        self.camera_controller = CameraController(self.main_window)
-        self.main_window.camera_controller = self.camera_controller
-
         # Load cleanup policy from JSON config
         cfg_mgr = ConfigManager()
         cleanup_cfg = cfg_mgr.get_cleanup_policy()

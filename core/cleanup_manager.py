@@ -7,21 +7,15 @@ from utils.centralisedlogging import setup_logger
 
 logger = setup_logger()
 
+
 class CleanupManager:
     """
-    Handles automatic cleanup of old recordings to prevent disk overflow.
-    Uses a hybrid strategy:
-      1. Always ensure a minimum free disk space (min_free_gb)
-      2. Delete recordings older than retention_days
+    Safely cleanup old recordings using:
+      1. Minimum free disk threshold
+      2. Max retention days
     """
 
     def __init__(self, root_dir="recordings", min_free_gb=5, retention_days=7):
-        """
-        Args:
-            root_dir (str): Base directory for recordings.
-            min_free_gb (float): Minimum free space in GB to maintain.
-            retention_days (int): Number of days to retain recordings.
-        """
         self.root_dir = Path(root_dir)
         self.min_free_gb = float(min_free_gb)
         self.retention_days = int(retention_days)
@@ -39,79 +33,98 @@ class CleanupManager:
         return total / (1024 ** 3)
 
     def _get_date_folders(self):
-        """Yield (camera_dir, [date_dirs sorted oldest->newest])"""
+        """Yield (camera_dir, sorted date folders)"""
         if not self.root_dir.exists():
             return
         for cam_dir in sorted(self.root_dir.iterdir()):
             if not cam_dir.is_dir():
                 continue
+
+            # ⭐ SORT by folder name date, not mtime
+            def parse_date(folder):
+                try:
+                    return time.mktime(time.strptime(folder.name, "%d-%m-%y"))
+                except:
+                    return folder.stat().st_mtime  # fallback
+
             date_dirs = [d for d in cam_dir.iterdir() if d.is_dir()]
-            date_dirs.sort(key=lambda p: p.stat().st_mtime)
+            date_dirs.sort(key=lambda p: parse_date(p))
+
             yield cam_dir, date_dirs
 
     # ---------- Cleanup operations ----------
     def _purge_oldest_until_space_ok(self):
-        """Delete oldest folders across all cameras until free space ≥ threshold."""
+        """Delete oldest date folder across all cameras until enough free space."""
+
+        today_str = time.strftime("%d-%m-%y")
+
         while self._get_free_gb() < self.min_free_gb:
             oldest = None
+
+            # Find oldest non-today folder ⭐
             for _, date_dirs in self._get_date_folders():
-                if date_dirs:
-                    candidate = date_dirs[0]
-                    if oldest is None or candidate.stat().st_mtime < oldest.stat().st_mtime:
-                        oldest = candidate
+                for folder in date_dirs:
+                    if folder.name != today_str:
+                        if oldest is None or folder.stat().st_mtime < oldest.stat().st_mtime:
+                            oldest = folder
+                        break
 
             if not oldest:
-                logger.warning("No folders left to delete, but disk still low on space!")
-                break
-
-            # Never delete today's folder
-            today = time.strftime("%d-%m-%y")
-            if oldest.name == today:
-                logger.warning("Reached today's folder; cannot delete further.")
-                break
+                logger.warning("No deletable folders left (only today's remain).")
+                return
 
             size_gb = self._get_dir_size_gb(oldest)
             shutil.rmtree(oldest, ignore_errors=True)
+
             logger.warning(
                 f"Deleted oldest recordings: {oldest} (≈{size_gb:.2f} GB freed). "
                 f"Free space now: {self._get_free_gb():.2f} GB"
             )
 
     def _purge_older_than_retention(self):
-        """Delete folders older than retention_days for all cameras."""
+        """Delete date folders older than retention_days."""
         now = time.time()
-        cutoff = self.retention_days * 86400  # seconds
+        today_str = time.strftime("%d-%m-%y")
 
         for cam_dir, date_dirs in self._get_date_folders():
-            for d in date_dirs:
-                # Skip today's recordings
-                if d.name == time.strftime("%d-%m-%y"):
+            for folder in date_dirs:
+
+                if folder.name == today_str:
                     continue
 
-                age_days = (now - d.stat().st_mtime) / 86400
+                # ⭐ Use folder name to compute age
+                try:
+                    folder_date = time.mktime(time.strptime(folder.name, "%d-%m-%y"))
+                except:
+                    folder_date = folder.stat().st_mtime
+
+                age_days = (now - folder_date) / 86400.0
+
                 if age_days > self.retention_days:
-                    size_gb = self._get_dir_size_gb(d)
-                    shutil.rmtree(d, ignore_errors=True)
-                    logger.info(f"Deleted old folder (> {self.retention_days} days): "
-                                f"{d} (≈{size_gb:.2f} GB freed)")
+                    size_gb = self._get_dir_size_gb(folder)
+                    shutil.rmtree(folder, ignore_errors=True)
+                    logger.info(
+                        f"Deleted old folder (> {self.retention_days} days): "
+                        f"{folder} (≈{size_gb:.2f} GB freed)"
+                    )
 
     # ---------- Main API ----------
     def run_cleanup(self):
-        """Perform cleanup routine."""
         if not self.root_dir.exists():
             return
 
         free_gb = self._get_free_gb()
         logger.info(f"[Cleanup] Free disk space: {free_gb:.2f} GB")
 
-        # 1️⃣ Step 1: if space too low, delete oldest until okay
+        # Step 1: Ensure minimum free disk space ⭐
         if free_gb < self.min_free_gb:
             logger.warning(
-                f"[Cleanup] Disk space below threshold ({free_gb:.2f} GB < {self.min_free_gb:.2f} GB). Purging..."
+                f"[Cleanup] Disk space below threshold "
+                f"({free_gb:.2f} GB < {self.min_free_gb:.2f} GB). Purging oldest..."
             )
             self._purge_oldest_until_space_ok()
 
-        # 2️⃣ Step 2: enforce retention window
+        # Step 2: Delete old folders beyond retention window ⭐
         self._purge_older_than_retention()
 
         logger.info("[Cleanup] Completed cleanup cycle.")
